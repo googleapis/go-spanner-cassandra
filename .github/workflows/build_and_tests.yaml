@@ -1,0 +1,44 @@
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  INTEGRATION_TEST_DATABASE_URI: ${{secrets.INTEGRATION_TEST_DATABASE_URI}}
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+    
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+          credentials_json: '${{ secrets.SPANNER_CASSANDRA_ADAPTER_CICD_SERVICE_ACCOUNT }}'
+
+    - name: build
+      run: go build -v ./...
+    
+    - name: unit tests
+      run: |
+          go mod tidy
+          go test -v -tags=unit ./... 
+
+    - name: it tests against Spanner 
+      run: |
+          go mod tidy
+          go test -v  cloud.google.com/go/spanner-cassandra/cassandra/gocql -tags=integration
+
+    - name: it tests against Cassandra 
+      run: |
+          go mod tidy
+          go test -v  cloud.google.com/go/spanner-cassandra/cassandra/gocql -tags=integration -target=cassandra

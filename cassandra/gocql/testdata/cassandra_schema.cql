@@ -1,4 +1,4 @@
-CREATE TABLE go_cli_test.cql (
+CREATE TABLE it_test.cql (
     pk_smallint smallint,
     col_bigint bigint,
     col_int int,

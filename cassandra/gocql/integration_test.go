@@ -170,7 +170,7 @@ func setupAndRunCassandra(m *testing.M) {
 	defer session.Close()
 
 	//create Kespace
-	ddlStatementKeyspace := "CREATE KEYSPACE IF NOT EXISTS go_cli_test WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : '1' };"
+	ddlStatementKeyspace := "CREATE KEYSPACE IF NOT EXISTS it_test WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : '1' };"
 	if err := session.Query(ddlStatementKeyspace).Exec(); err != nil {
 		log.Fatalf("Could not create keyspace: %v", err)
 	}

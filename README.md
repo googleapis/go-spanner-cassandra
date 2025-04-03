@@ -13,7 +13,7 @@ This client acts as a local tcp proxy, intercepting the raw Cassandra protocol b
 
 - [When to use spanner-cassandra?](#when-to-use-spanner-cassandra)
 - [Prerequisites](#prerequisites)
-- [Spanner Instructions](#cloud-spanner-instructions)
+- [Spanner Instructions](#spanner-instructions)
 - [Getting started](#getting-started)
   - [In-Process Dependency](#in-process-dependency-recommended)
   - [Sidecar Proxy](#sidecar-proxy)
@@ -50,7 +50,7 @@ gcloud config set project [MY_PROJECT_NAME]
 ## Spanner Instructions
 
 - Database and all the tables should be created in advance before executing the queries using the adapter.
-- To migrate existing Cassandra schema to corresponding Spanner schema, refer to [our official Cassandra to Spanner migration tool](TBD) to automate this process.
+- To migrate existing Cassandra schema to corresponding Spanner schema, refer to [spanner-cassandra-schema-tool](https://github.com/cloudspannerecosystem/spanner-cassandra-schema-tool) to automate this process.
 
 ## Getting Started
 
@@ -78,24 +78,22 @@ For Go applications already using the `gocql` library, integrating the Spanner C
           // Required: Specify the Spanner database URI
           DatabaseUri: "projects/your_gcp_project/instances/your_spanner_instance/databases/your_spanner_database",
       }
-
-    	// Optional: Configure other gocql cluster settings as needed
-    	cluster := spanner.NewCluster(opts)
-    	cluster.Timeout = 5 * time.Second
+      // Optional: Configure other gocql cluster settings as needed
+      cluster := spanner.NewCluster(opts)
+      cluster.Timeout = 5 * time.Second
       // Your Spanner database schema is mapped to a keyspace
-    	cluster.Keyspace = "your_spanner_database"
+      cluster.Keyspace = "your_spanner_database"
       // Important to close the adapter's resources
-    	defer spanner.CloseCluster(cluster)
-    	// Rest of your business logic
-    	session, err := cluster.CreateSession()
-    	if err != nil {
-    		fmt.Printf("Failed to create session: %v\n", err)
-    		return
-    	}
-    	defer session.Close()
-    	// Rest of your business logic such as session.Query(SELECT * FROM ...)
+      defer spanner.CloseCluster(cluster)
+      // Rest of your business logic
+      session, err := cluster.CreateSession()
+      if err != nil {
+        fmt.Printf("Failed to create session: %v\n", err)
+        return
+      }
+      defer session.Close()
+      // Rest of your business logic such as session.Query(SELECT * FROM ...)
     }
-
     ```
 
 *  Run your Go application as usual. The adapter will now route traffic to your Spanner database.
@@ -109,8 +107,8 @@ For non-Go applications or tools like `cqlsh`, you can run the Spanner Cassandra
 *  Clone the repository:
 
     ```bash
-    git clone <repository-url>
-    cd spanner-cassandra
+    git clone https://github.com/googleapis/go-spanner-cassandra.git
+    cd go-spanner-cassandra
     ```
 
 *  Run the `cassandra_launcher.go` with the required `-db` flag:

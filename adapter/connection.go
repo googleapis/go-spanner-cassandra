@@ -23,8 +23,8 @@ import (
 	"io"
 	"net"
 
-	"cloud.google.com/go/spanner-cassandra/adapter/apiv1/adapterpb"
-	"cloud.google.com/go/spanner-cassandra/logger"
+	"github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
+	"github.com/googleapis/go-spanner-cassandra/logger"
 
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"github.com/datastax/go-cassandra-native-protocol/message"

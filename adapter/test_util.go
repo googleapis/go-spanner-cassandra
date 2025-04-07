@@ -24,10 +24,10 @@ import (
 	"io"
 	"strings"
 
-	"cloud.google.com/go/spanner-cassandra/adapter/apiv1/adapterpb"
 	"github.com/datastax/go-cassandra-native-protocol/datatype"
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"github.com/datastax/go-cassandra-native-protocol/message"
+	"github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
 	"google.golang.org/grpc/metadata"
 )
 

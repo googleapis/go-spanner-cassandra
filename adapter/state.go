@@ -17,7 +17,7 @@ limitations under the License.
 package adapter
 
 import (
-	"cloud.google.com/go/spanner-cassandra/adapter/apiv1/adapterpb"
+	"github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
 
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	lru "github.com/hashicorp/golang-lru"

@@ -1,4 +1,4 @@
-module cloud.google.com/go/spanner-cassandra
+module github.com/googleapis/go-spanner-cassandra
 
 go 1.23.0
 

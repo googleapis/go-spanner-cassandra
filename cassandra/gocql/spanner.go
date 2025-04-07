@@ -22,8 +22,8 @@ import (
 	"net"
 	"time"
 
-	"cloud.google.com/go/spanner-cassandra/adapter"
 	"github.com/gocql/gocql"
+	"github.com/googleapis/go-spanner-cassandra/adapter"
 )
 
 // Map from cluster config to local proxies.

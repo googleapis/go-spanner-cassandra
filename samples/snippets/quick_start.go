@@ -24,7 +24,7 @@ import (
 	"math/rand/v2"
 	"time"
 
-	spanner "cloud.google.com/go/spanner-cassandra/cassandra/gocql"
+	spanner "github.com/googleapis/go-spanner-cassandra/cassandra/gocql"
 )
 
 // This sample assumes your spanner database <your_db> contains a table <users>

@@ -36,9 +36,9 @@ jobs:
     - name: it tests against Spanner 
       run: |
           go mod tidy
-          go test -v  cloud.google.com/go/spanner-cassandra/cassandra/gocql -tags=integration
+          go test -v  github.com/googleapis/go-spanner-cassandra/cassandra/gocql -tags=integration
 
     - name: it tests against Cassandra 
       run: |
           go mod tidy
-          go test -v  cloud.google.com/go/spanner-cassandra/cassandra/gocql -tags=integration -target=cassandra
+          go test -v  github.com/googleapis/go-spanner-cassandra/cassandra/gocql -tags=integration -target=cassandra

@@ -68,7 +68,7 @@ For Go applications already using the `gocql` library, integrating the Spanner C
 *   Import the `spanner` package in your go applcation:
 
     ```go
-    import spanner "cloud.google.com/go/spanner-cassandra/cassandra/gocql"
+    import spanner "github.com/googleapis/go-spanner-cassandra/cassandra/gocql"
     ```
 *  Modify your cluster creation code. Instead of using `gocql.NewCluster`, use `spanner.NewCluster` and provide the Spanner database URI:
 

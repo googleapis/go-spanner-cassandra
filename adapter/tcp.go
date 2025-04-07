@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net"
 
-	"cloud.google.com/go/spanner-cassandra/logger"
+	"github.com/googleapis/go-spanner-cassandra/logger"
 
 	"go.uber.org/zap"
 )

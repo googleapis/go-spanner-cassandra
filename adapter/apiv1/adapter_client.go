@@ -27,8 +27,8 @@ import (
 	"net/url"
 	"time"
 
-	adapterpb "cloud.google.com/go/spanner-cassandra/adapter/apiv1/adapterpb"
 	gax "github.com/googleapis/gax-go/v2"
+	adapterpb "github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	gtransport "google.golang.org/api/transport/grpc"

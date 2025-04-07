@@ -19,8 +19,8 @@ package adapter_test
 import (
 	"context"
 
-	adapter "cloud.google.com/go/spanner-cassandra/adapter/apiv1"
-	adapterpb "cloud.google.com/go/spanner-cassandra/adapter/apiv1/adapterpb"
+	adapter "github.com/googleapis/go-spanner-cassandra/adapter/apiv1"
+	adapterpb "github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
 )
 
 func ExampleNewClient() {

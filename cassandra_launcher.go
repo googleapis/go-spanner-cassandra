@@ -31,8 +31,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	spanner "cloud.google.com/go/spanner-cassandra/cassandra/gocql"
-	"cloud.google.com/go/spanner-cassandra/logger"
+	spanner "github.com/googleapis/go-spanner-cassandra/cassandra/gocql"
+	"github.com/googleapis/go-spanner-cassandra/logger"
 	"go.uber.org/zap"
 )
 

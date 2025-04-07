@@ -24,7 +24,7 @@ import (
 	"net"
 	"testing"
 
-	"cloud.google.com/go/spanner-cassandra/adapter"
+	"github.com/googleapis/go-spanner-cassandra/adapter"
 
 	"github.com/gocql/gocql"
 	"github.com/stretchr/testify/assert"

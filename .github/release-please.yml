@@ -1,0 +1,6 @@
+releaseType: go-yoshi
+bumpMinorPreMajor: true
+handleGHRelease: true
+extraFiles: [
+    "README.md",
+]

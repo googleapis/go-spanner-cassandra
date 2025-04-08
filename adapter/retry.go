@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
+	"cloud.google.com/go/spanner/adapter/apiv1/adapterpb"
 
 	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"

@@ -21,7 +21,7 @@ import (
 	"bytes"
 	"os"
 
-	"github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
+	"cloud.google.com/go/spanner/adapter/apiv1/adapterpb"
 
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"go.uber.org/zap"

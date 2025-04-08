@@ -25,9 +25,9 @@ import (
 	"sync"
 	"time"
 
+	vkit "cloud.google.com/go/spanner/adapter/apiv1"
+	"cloud.google.com/go/spanner/adapter/apiv1/adapterpb"
 	"github.com/googleapis/gax-go/v2"
-	vkit "github.com/googleapis/go-spanner-cassandra/adapter/apiv1"
-	"github.com/googleapis/go-spanner-cassandra/adapter/apiv1/adapterpb"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	"google.golang.org/grpc"

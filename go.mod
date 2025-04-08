@@ -3,6 +3,7 @@ module github.com/googleapis/go-spanner-cassandra
 go 1.23.0
 
 require (
+	cloud.google.com/go/spanner v1.79.0
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20240903140133-605a850e203b
 	github.com/gocql/gocql v1.7.0
 	github.com/googleapis/gax-go/v2 v2.14.1
@@ -10,11 +11,9 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
 	go.uber.org/zap v1.27.0
-	google.golang.org/api v0.226.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4
+	google.golang.org/api v0.227.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4
 	google.golang.org/grpc v1.71.0
-	google.golang.org/protobuf v1.36.5
 )
 
 require (
@@ -85,6 +84,8 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

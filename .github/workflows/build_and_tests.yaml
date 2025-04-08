@@ -43,4 +43,4 @@ jobs:
     - name: it tests against Cassandra 
       run: |
           go mod tidy
-          go test -v  github.com/googleapis/go-spanner-cassandra/cassandra/gocql -tags=integration -target=cassandra
+          go test -v  ./... -tags=integration

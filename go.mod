@@ -6,6 +6,8 @@ require (
 	cloud.google.com/go/spanner v1.79.0
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20240903140133-605a850e203b
 	github.com/gocql/gocql v1.7.0
+	github.com/google/go-cmp v0.7.0
+	github.com/google/uuid v1.6.0
 	github.com/googleapis/gax-go/v2 v2.14.1
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/stretchr/testify v1.10.0
@@ -45,7 +47,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/klauspost/compress v1.17.4 // indirect

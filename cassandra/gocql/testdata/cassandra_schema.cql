@@ -1,19 +1,13 @@
-CREATE TABLE it_test.cql (
-    pk_smallint smallint,
-    col_bigint bigint,
-    col_int int,
-    col_bool boolean,
-    col_timestamp timestamp,
-    col_date date,
-    col_time time,
-    col_float float,
+CREATE TABLE it_test.AllCqlConstantTypes (
+    pk_int int,
     col_double double,
-    col_decimal decimal,
-    col_blob blob,
+    col_boolean boolean,
+    col_varchar text,
+    col_float float,
     col_uuid uuid,
-    col_string text,
-    col_varint varint,
+    col_blob blob,
     col_map map<text, int>,
     col_set set<int>,
     col_list list<boolean>,
-    PRIMARY KEY (pk_smallint));
+    PRIMARY KEY (pk_int)
+);

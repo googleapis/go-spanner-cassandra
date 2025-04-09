@@ -29,13 +29,13 @@ import (
 
 // This sample assumes your spanner database <your_db> contains a table <users>
 // with the following schema:
-/*
-CREATE TABLE users (
-	id   INT64          OPTIONS (cassandra_type = 'int'),
-	active    BOOL           OPTIONS (cassandra_type = 'boolean'),
-	username  STRING(MAX)    OPTIONS (cassandra_type = 'text'),
-) PRIMARY KEY (id);
-*/
+//
+// CREATE TABLE users (
+//	id   	 	INT64          OPTIONS (cassandra_type = 'int'),
+//	active    	BOOL           OPTIONS (cassandra_type = 'boolean'),
+//	username  	STRING(MAX)    OPTIONS (cassandra_type = 'text'),
+// ) PRIMARY KEY (id);
+
 func quickStart(databaseURI string, w io.Writer) error {
 	opts := &spanner.Options{
 		DatabaseUri: databaseURI,
@@ -45,6 +45,7 @@ func quickStart(databaseURI string, w io.Writer) error {
 		return fmt.Errorf("failed to create cluster")
 	}
 	defer spanner.CloseCluster(cluster)
+
 	// You can still configure your cluster as usual after connecting to your
 	// spanner database
 	cluster.Timeout = 5 * time.Second
@@ -57,7 +58,8 @@ func quickStart(databaseURI string, w io.Writer) error {
 	}
 
 	randomUserId := rand.IntN(math.MaxInt32)
-	if err = session.Query("INSERT INTO users (id, active, username) VALUES (?, ?, ?)", randomUserId, true, "John Doe").
+	if err = session.Query("INSERT INTO users (id, active, username) VALUES (?, ?, ?)",
+			       randomUserId, true, "John Doe").
 		Exec(); err != nil {
 		return err
 	}
@@ -65,12 +67,12 @@ func quickStart(databaseURI string, w io.Writer) error {
 	var id int
 	var active bool
 	var username string
-	if err = session.Query("SELECT id, active, username FROM users WHERE id = ?", randomUserId).
+	if err = session.Query("SELECT id, active, username FROM users WHERE id = ?",
+			       randomUserId).
 		Scan(&id, &active, &username); err != nil {
 		return err
 	}
 	fmt.Fprintf(w, "%d %v %s\n", id, active, username)
 	return nil
 }
-
 // [END spanner_cassandra_quick_start]

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/googleapis/go-spanner-cassandra/compare/v0.1.0...v0.1.1) (2025-04-11)
+
+
+### Documentation
+
+* Fix sample lint ([187deb6](https://github.com/googleapis/go-spanner-cassandra/commit/187deb6a2e9be77928df5b94489999300c26b4f7))
+
 ## 0.1.0 (2025-04-09)
 
 

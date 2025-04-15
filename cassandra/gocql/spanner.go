@@ -24,6 +24,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/googleapis/go-spanner-cassandra/adapter"
+	"github.com/googleapis/go-spanner-cassandra/logger"
 )
 
 // Map from cluster config to local proxies.
@@ -33,13 +34,19 @@ var proxyMap = make(
 
 // Options represents the configuration for a virtual Spanner cluster.
 type Options struct {
+	// Optional Spanner service endpoint. Defaults to spanner.googleapis.com:443
 	SpannerEndpoint string
-	TCPEndpoint     string
-	DatabaseUri     string
-	// Number of channels when dial grpc connection.
+	// Optional Endpoint to start TCP server. Defaults to localhost:9042
+	TCPEndpoint string
+	// Required database uri to connect to.
+	DatabaseUri string
+	// Number of channels when dial grpc connection. Defaults to 4.
 	NumGrpcChannels int
-	// Whether to disable automatic grpc retry for AdaptMessage API
+	// Optional boolean indicate whether to disable automatic grpc retry for
+	// AdaptMessage API. Defauls to false.
 	DisableAdaptMessageRetry bool
+	// Optional log level. Defaults to info.
+	LogLevel string
 }
 
 type ProxyAddressTranslator struct {
@@ -56,6 +63,13 @@ func (t *ProxyAddressTranslator) Translate(ip net.IP, port int) (net.IP, int) {
 func NewCluster(
 	opts *Options,
 ) *gocql.ClusterConfig {
+	// Initialize a global logger with default INFO log level
+	err := logger.SetupGlobalLogger(opts.LogLevel)
+	if err != nil {
+		panic(
+			err,
+		)
+	}
 	// Create a new local Cassandra proxy.
 	proxy, err := adapter.NewTCPProxy(
 		adapter.Options{

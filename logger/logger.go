@@ -19,28 +19,44 @@ package logger
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 
 	"cloud.google.com/go/spanner/adapter/apiv1/adapterpb"
 
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var zapLog *zap.Logger
 
-func init() {
-	var err error
+func SetupGlobalLogger(level string) error {
 	var config zap.Config
+
 	if os.Getenv("ADAPTER_CLI_ENV") == "dev" {
 		config = zap.NewDevelopmentConfig()
 	} else {
 		config = zap.NewProductionConfig()
 	}
+
+	logLevel := zapcore.InfoLevel
+	if level != "" {
+		err := logLevel.Set(level)
+		if err != nil {
+			return fmt.Errorf("invalid log level '%s': %w", level, err)
+		}
+	}
+	config.Level.SetLevel(logLevel)
+
+	var err error
 	zapLog, err = config.Build(zap.AddCallerSkip(1))
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to build global logger: %w", err)
 	}
+	zapLog = zapLog.Named("go-spanner-cassandra")
+
+	return nil
 }
 
 func Info(message string, fields ...zap.Field) {

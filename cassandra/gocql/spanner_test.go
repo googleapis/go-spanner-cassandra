@@ -28,6 +28,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // sample command to run all unit tests
@@ -196,6 +197,74 @@ func TestBatch(t *testing.T) {
 			err := session.ExecuteBatch(b)
 			assert.Nil(t, err, fmt.Sprintf("Batch message failed failed: %v", err))
 			teardownCluster(t, cluster)
+		})
+	}
+}
+
+func TestNewClusterPanicsOnInvalidLogLevel(t *testing.T) {
+	t.Cleanup(adapter.ResetGrpcFuncs())
+	testCases := []struct {
+		name        string
+		logLevel    string
+		expectPanic bool
+	}{
+		{
+			name:        "ShouldPanicOnInvalidLevel",
+			logLevel:    "invalid",
+			expectPanic: true,
+		},
+		{
+			name:        "ShouldNotPanicOnEmptyLevel",
+			logLevel:    "",
+			expectPanic: false,
+		},
+		{
+			name:        "ShouldNotPanicOnInfoLevel",
+			logLevel:    "info",
+			expectPanic: false,
+		},
+		{
+			name:        "ShouldNotPanicOnWarnLevel",
+			logLevel:    "warn",
+			expectPanic: false,
+		},
+		{
+			name:        "ShouldNotPanicOnErrorLevel",
+			logLevel:    "error",
+			expectPanic: false,
+		},
+		{
+			name:        "ShouldNotPanicOnFatalLevel",
+			logLevel:    "fatal",
+			expectPanic: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			adapter.MockCreateSessionGrpc()
+
+			opts := &Options{
+				DatabaseUri: "projects/test/instances/test/databases/test",
+				LogLevel:    tc.logLevel,
+			}
+
+			callNewCluster := func() {
+				cluster := NewCluster(opts)
+				if cluster != nil {
+					teardownCluster(t, cluster)
+				}
+			}
+
+			if tc.expectPanic {
+				require.Panics(
+					t,
+					callNewCluster,
+					"NewCluster should panic with invalid log level",
+				)
+			} else {
+				require.NotPanics(t, callNewCluster, "NewCluster should not panic with valid log level")
+			}
 		})
 	}
 }

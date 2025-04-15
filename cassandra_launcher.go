@@ -55,6 +55,12 @@ func main() {
 		"The number of channels when dial grpc connection. Default to 4.",
 	)
 
+	logLevel := flag.String(
+		"log",
+		"info",
+		"Log level. Default to info.",
+	)
+
 	flag.Parse()
 
 	if *databaseURI == "" {
@@ -67,6 +73,7 @@ func main() {
 		DatabaseUri:     *databaseURI,
 		TCPEndpoint:     *tcpEndpoint,
 		NumGrpcChannels: *numGrpcChannels,
+		LogLevel:        *logLevel,
 	}
 
 	cluster := spanner.NewCluster(opts)

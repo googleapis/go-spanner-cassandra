@@ -20,15 +20,15 @@ package adapter
 type Options struct {
 	// Spanner database uri to connect to.
 	DatabaseUri string
-	// Optional Spanner service endpoint.
+	// Optional Spanner service endpoint. Defaults to spanner.googleapis.com:443
 	SpannerEndpoint string
 	// Protocol type (ie: cassandra).
 	Protocol Protocol
-	// Number of channels when dial grpc connection.
+	// Number of channels when dial grpc connection. Defaults to 4.
 	NumGrpcChannels int
-	// Optional Endpoint to start TCP server. If not specified, defaults to
-	// 127.0.0.1:9042
+	// Optional Endpoint to start TCP server. Defaults to localhost:9042
 	TCPEndpoint string
-	// Whether to disable automatic grpc retry for AdaptMessage API
+	// Optional boolean indicate whether to disable automatic grpc retry for
+	// AdaptMessage API. Defauls to false.
 	DisableAdaptMessageRetry bool
 }

@@ -1,10 +1,11 @@
-releaseType: go-yoshi
-bumpMinorPreMajor: true
 handleGHRelease: true
 manifest: true
+releaseType: go
+bumpMinorPreMajor: true
+
 branches:
   - branch: main
-    releaseType: go-yoshi
+    releaseType: go
     handleGHRelease: true
     manifest: true
     manifestFile: .release-please-manifest.json

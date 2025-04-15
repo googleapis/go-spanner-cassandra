@@ -1,0 +1,13 @@
+{
+  "release-type": "go",
+  "separate-pull-requests": true,
+  "include-component-in-tag": false,
+  "packages": {
+    ".": {
+      "extra-files": [
+        "adapter/client.go",
+        "README.md"
+      ]
+    }
+  }
+}

@@ -43,7 +43,7 @@ const (
 	// defaultSpannerEndpoint is the default spanner APIs grpc endpoint.
 	defaultSpannerEndpoint = "spanner.googleapis.com:443"
 	// current version
-	version = "0.1.0"
+	version = "0.1.0" // x-release-please-version
 	// resourcePrefixHeader is the name of the metadata header used to indicate
 	// the resource being operated on.
 	resourcePrefixHeader = "google-cloud-resource-prefix"

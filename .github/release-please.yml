@@ -1,6 +1,11 @@
 releaseType: go-yoshi
 bumpMinorPreMajor: true
 handleGHRelease: true
-extraFiles: [
-    "README.md",
-]
+manifest: true
+branches:
+  - branch: main
+    releaseType: go-yoshi
+    handleGHRelease: true
+    manifest: true
+    manifestFile: .release-please-manifest.json
+    manifestConfig: release-please-config.json

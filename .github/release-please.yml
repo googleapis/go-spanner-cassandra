@@ -1,6 +1,6 @@
 handleGHRelease: true
 manifest: true
-releaseType: go
+releaseType: go-yoshi
 bumpMinorPreMajor: true
 
 branches:

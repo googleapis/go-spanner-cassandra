@@ -1,10 +1,9 @@
 # Spanner Cassandra Go Client
+> [!NOTE] 
+> Spanner Cassandra Go Client is currently in public preview.
 
-## Current Released Version in Public Preview
-
-<!--- {x-version-update-start:google-cloud-go-spanner-cassandra:released} -->
-Version `0.1.0`
-<!--- {x-version-update-end} -->
+![latest release](https://img.shields.io/github/v/release/googleapis/go-spanner-cassandra)
+![Go version](https://img.shields.io/github/go-mod/go-version/googleapis/go-spanner-cassandra)
 
 ## Introduction
 The **Spanner Cassandra Go Client** is a tool designed to bridge applications written for the Apache Cassandra® database with Google Spanner. With Spanner's native support for the Cassandra v4 wire protocol, this client allows Go applications using the `gocql` driver, or even non-Go applications and tools like `cqlsh`, to connect seamlessly to a Spanner database.

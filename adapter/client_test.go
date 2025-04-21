@@ -62,7 +62,8 @@ func TestGetOrRefreshSession(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			SessionRefreshTimeInterval = tt.refreshInterval
 			cl, err := newAdapterClient(context.Background(), Options{
-				DatabaseUri: "test",
+				DatabaseUri:   "test",
+				GoogleApiOpts: SkipAuthOpts,
 			})
 			assert.NoError(t, err)
 			cl.session = tt.initialSession

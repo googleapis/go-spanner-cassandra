@@ -108,12 +108,10 @@ func newAdapterClient(
 	}
 
 	// Build grpc options.
-	dialOpts, err := getDialOpts(opts)
-	if err != nil {
-		return nil, err
-	}
+	dialOpts := getAllClientOpts(opts)
 
 	// Create a default gapic client.
+	var err error
 	cl.gapicClient, err = vkit.NewClient(ctx, dialOpts...)
 	if err != nil {
 		return nil, err
@@ -121,7 +119,9 @@ func newAdapterClient(
 	return cl, nil
 }
 
-func defaultGRPCClientOptions() []option.ClientOption {
+// TODO: Export a generated client opts function from
+// google-cloud-go/spanner/adapter rather than manually constructing here
+func generatedGRPCClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		internaloption.WithDefaultEndpoint("spanner.googleapis.com:443"),
 		internaloption.WithDefaultEndpointTemplate("spanner.UNIVERSE_DOMAIN:443"),
@@ -136,32 +136,38 @@ func defaultGRPCClientOptions() []option.ClientOption {
 	}
 }
 
-func getDialOpts(
+// Combines the default options from the generated client, the default options
+// of the hand-written client and the user options to one list of options.
+// Precedence: user provided GoogleApiOpts > clientDefaultOpts >
+// generatedDefaultOpts
+func getAllClientOpts(
 	opts Options,
-) ([]option.ClientOption, error) {
+) []option.ClientOption {
 	if opts.SpannerEndpoint == "" {
 		opts.SpannerEndpoint = defaultSpannerEndpoint
 	}
 
-	dialOpts := defaultGRPCClientOptions()
-	dialOpts = append(
-		dialOpts,
-		option.WithEndpoint(opts.SpannerEndpoint),
+	generatedDefaultOpts := generatedGRPCClientOptions()
+	clientDefaultOpts := []option.ClientOption{
 		option.WithGRPCConnectionPool(opts.NumGrpcChannels),
 		option.WithUserAgent(
 			fmt.Sprintf("spanner-cassandra-adapter-go/v%s", version),
 		),
+		option.WithGRPCConnectionPool(opts.NumGrpcChannels),
 		internaloption.AllowNonDefaultServiceAccount(true),
-	)
+	}
 
 	if enableDirectPathXds, _ := strconv.ParseBool(os.Getenv("GOOGLE_SPANNER_ENABLE_DIRECT_ACCESS")); enableDirectPathXds {
-		dialOpts = append(
-			dialOpts,
+		clientDefaultOpts = append(
+			clientDefaultOpts,
 			internaloption.EnableDirectPath(true),
 			internaloption.EnableDirectPathXds(),
 		)
 	}
-	return dialOpts, nil
+
+	allDefaultOpts := append(generatedDefaultOpts, clientDefaultOpts...)
+
+	return append(allDefaultOpts, opts.GoogleApiOpts...)
 }
 
 func (cl *AdapterClient) getMetadata() metadata.MD {

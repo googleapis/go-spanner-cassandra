@@ -16,6 +16,8 @@ limitations under the License.
 
 package adapter
 
+import "google.golang.org/api/option"
+
 // Options for configuring the adapter.
 type Options struct {
 	// Spanner database uri to connect to.
@@ -31,4 +33,6 @@ type Options struct {
 	// Optional boolean indicate whether to disable automatic grpc retry for
 	// AdaptMessage API. Defauls to false.
 	DisableAdaptMessageRetry bool
+	// Optional google api opts. Default to empty.
+	GoogleApiOpts []option.ClientOption
 }

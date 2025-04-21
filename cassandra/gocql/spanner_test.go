@@ -42,7 +42,8 @@ func setupCluster(
 	adapter.MockCreateSessionGrpc()
 	adapter.MockAdaptMessageGrpc(returnResponsesInChunks)
 	opts := &Options{
-		DatabaseUri: "projects/test/instances/test/databases/test",
+		DatabaseUri:   "projects/test/instances/test/databases/test",
+		GoogleApiOpts: adapter.SkipAuthOpts,
 	}
 
 	cluster := NewCluster(opts)
@@ -245,8 +246,9 @@ func TestNewClusterPanicsOnInvalidLogLevel(t *testing.T) {
 			adapter.MockCreateSessionGrpc()
 
 			opts := &Options{
-				DatabaseUri: "projects/test/instances/test/databases/test",
-				LogLevel:    tc.logLevel,
+				DatabaseUri:   "projects/test/instances/test/databases/test",
+				LogLevel:      tc.logLevel,
+				GoogleApiOpts: adapter.SkipAuthOpts,
 			}
 
 			callNewCluster := func() {

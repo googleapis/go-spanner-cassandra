@@ -28,12 +28,25 @@ import (
 	"github.com/datastax/go-cassandra-native-protocol/datatype"
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"github.com/datastax/go-cassandra-native-protocol/message"
+	"google.golang.org/api/option"
+	"google.golang.org/api/option/internaloption"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
 var (
 	selectPreparedId = "select_id"
 	dmlPreparedId    = "dml_id"
+	// api options to disable application default credential in unit test
+	SkipAuthOpts = []option.ClientOption{
+		option.WithEndpoint("localhost:443"),
+		option.WithGRPCDialOption(
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		),
+		option.WithoutAuthentication(),
+		internaloption.SkipDialSettingsValidation(),
+	}
 )
 
 type GrpcFuncs struct {

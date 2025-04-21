@@ -25,6 +25,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/googleapis/go-spanner-cassandra/adapter"
 	"github.com/googleapis/go-spanner-cassandra/logger"
+	"google.golang.org/api/option"
 )
 
 // Map from cluster config to local proxies.
@@ -47,6 +48,8 @@ type Options struct {
 	DisableAdaptMessageRetry bool
 	// Optional log level. Defaults to info.
 	LogLevel string
+	// Optional google api opts. Default to empty.
+	GoogleApiOpts []option.ClientOption
 }
 
 type ProxyAddressTranslator struct {
@@ -79,6 +82,7 @@ func NewCluster(
 			Protocol:                 &cassandraProtocol{},
 			NumGrpcChannels:          opts.NumGrpcChannels,
 			DisableAdaptMessageRetry: opts.DisableAdaptMessageRetry,
+			GoogleApiOpts:            opts.GoogleApiOpts,
 		},
 	)
 	if err != nil {

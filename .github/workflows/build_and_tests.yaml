@@ -21,11 +21,6 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: '1.23'
-    
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v2'
-      with:
-          credentials_json: '${{ secrets.SPANNER_CASSANDRA_ADAPTER_CICD_SERVICE_ACCOUNT }}'
 
     - name: build
       run: go build -v ./...
@@ -34,6 +29,11 @@ jobs:
       run: |
           go mod tidy
           go test -v -tags=unit ./... 
+    
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+          credentials_json: '${{ secrets.SPANNER_CASSANDRA_ADAPTER_CICD_SERVICE_ACCOUNT }}'
 
     - name: it tests against Spanner 
       run: |

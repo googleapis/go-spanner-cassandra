@@ -163,7 +163,7 @@ func TestDML(t *testing.T) {
 	}
 }
 
-func TestBatch(t *testing.T) {
+func TestBasicBatch(t *testing.T) {
 	t.Cleanup(adapter.ResetGrpcFuncs())
 	testCases := []struct {
 		name                    string

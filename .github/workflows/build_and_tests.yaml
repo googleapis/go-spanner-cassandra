@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  INTEGRATION_TEST_DATABASE_URI: ${{secrets.INTEGRATION_TEST_DATABASE_URI}}
+  INTEGRATION_TEST_INSTANCE: ${{secrets.INTEGRATION_TEST_INSTANCE}}
 
 jobs:
   build:

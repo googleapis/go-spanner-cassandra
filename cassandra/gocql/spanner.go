@@ -103,9 +103,9 @@ func NewCluster(
 	)
 	cfg.Port = addr.Port
 	cfg.ProtoVersion = 4
-
 	cfg.WriteCoalesceWaitTime = 0
-
+	// Use a non token aware routing policy by default
+	cfg.PoolConfig.HostSelectionPolicy = gocql.RoundRobinHostPolicy()
 	// Override default timeout settings.
 	cfg.Timeout = 60 * time.Second
 	cfg.ConnectTimeout = 60 * time.Second

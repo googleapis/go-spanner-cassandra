@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.2.0...v0.3.0) (2025-04-23)
+
+
+### Features
+
+* support suppress api client options on start ([7bdfd24](https://github.com/googleapis/go-spanner-cassandra/commit/7bdfd2402806320e9f43d1dc8818c527f00d2d36))
+
+
+### Documentation
+
+* add log level config to readme ([58fe77c](https://github.com/googleapis/go-spanner-cassandra/commit/58fe77c89ce512454c0e3134a04ca648c8e7e33b))
+
 ## [0.2.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.1.0...v0.2.0) (2025-04-16)
 
 

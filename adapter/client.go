@@ -149,9 +149,10 @@ func getAllClientOpts(
 
 	generatedDefaultOpts := generatedGRPCClientOptions()
 	clientDefaultOpts := []option.ClientOption{
+		option.WithEndpoint(opts.SpannerEndpoint),
 		option.WithGRPCConnectionPool(opts.NumGrpcChannels),
 		option.WithUserAgent(
-			fmt.Sprintf("spanner-cassandra-adapter-go/v%s", version),
+			fmt.Sprintf("go-spanner-cassandra/v%s", version),
 		),
 		option.WithGRPCConnectionPool(opts.NumGrpcChannels),
 		internaloption.AllowNonDefaultServiceAccount(true),

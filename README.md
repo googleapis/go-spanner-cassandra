@@ -160,6 +160,10 @@ The following list contains the most frequently used startup options for Spanner
 -grpc-channels <NumGrpcChannels>
   * The number of gRPC channels to use when connecting to Spanner.
   * Default: 4
+
+-log <LogLevel>
+  * Log level used by the global zap logger.
+  * Default: info
 ```
 
 ## License

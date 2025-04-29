@@ -1,0 +1,26 @@
+on:
+  # This allows manual activation of this action for testing.
+  workflow_dispatch:
+  # Run unit tests on all push since they don't consume any resources
+  push:
+
+jobs:
+  build:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+
+    - name: set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+
+    - name: build
+      run: go build -v ./...
+    
+    - name: unit tests
+      run: |
+          go mod tidy
+          go test -v -tags=unit ./... 

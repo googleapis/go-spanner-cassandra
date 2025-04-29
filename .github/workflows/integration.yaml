@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    name: Build and Test
+    name: Integration Tests
     runs-on: ubuntu-latest
     steps:
     - name: checkout
@@ -25,11 +25,6 @@ jobs:
     - name: build
       run: go build -v ./...
     
-    - name: unit tests
-      run: |
-          go mod tidy
-          go test -v -tags=unit ./... 
-    
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
@@ -38,9 +33,9 @@ jobs:
     - name: it tests against Spanner 
       run: |
           go mod tidy
-          go test -v  github.com/googleapis/go-spanner-cassandra/cassandra/gocql -tags=integration
+          go test -v  ./... -tags=integration
 
     - name: it tests against Cassandra 
       run: |
           go mod tidy
-          go test -v  ./... -tags=integration
+          go test -v  ./... -tags=integration -target=cassandra

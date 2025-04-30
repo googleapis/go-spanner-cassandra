@@ -1,0 +1,46 @@
+name: Scheduled Daily Integration Tests
+
+on:
+  schedule:
+    # Runs every day at 8 AM PST.
+    - cron: '0 15 * * *'
+  # This allows manual activation of this action for testing.
+  workflow_dispatch:
+
+env:
+  INTEGRATION_TEST_INSTANCE: ${{secrets.INTEGRATION_TEST_INSTANCE}}
+
+jobs:
+  build:
+    name: Daily Scheduled Integration Tests
+    # Only run on parent repo's main branch
+    if: github.repository_owner == 'googleapis' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'
+
+      - name: seu up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: build 
+        run: go build -v ./...
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.SPANNER_CASSANDRA_ADAPTER_CICD_SERVICE_ACCOUNT }}'
+
+      - name: it tests against Spanner cloud-devel environment
+        run: |
+          go mod tidy
+          go test -v  ./... -tags=integration -spanner-endpoint=${{secrets.SPANNER_DEVEL_ENDPOINT}}
+      
+      - name: Run Integration Tests against Spanner prod environment
+        run: |
+          go mod tidy
+          go test -v  ./... -tags=integration

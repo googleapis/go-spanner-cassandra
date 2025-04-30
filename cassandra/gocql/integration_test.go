@@ -34,6 +34,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"google.golang.org/api/option"
 )
 
 var (
@@ -113,7 +114,9 @@ func setupAndRunSpanner(m *testing.M, spannerEndpoint string) int {
 	}
 	databaseUri = fmt.Sprintf("%s/databases/%s", instanceURI, keyspace)
 	var err error
-	adminClient, err = database.NewDatabaseAdminClient(ctx)
+	adminClient, err = database.NewDatabaseAdminClient(ctx, []option.ClientOption{
+		option.WithEndpoint(spannerEndpoint),
+	}...)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

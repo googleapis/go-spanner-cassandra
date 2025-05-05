@@ -226,7 +226,7 @@ func (dc *driverConnection) handleConnection(ctx context.Context) {
 
 		// Send the grpc request.
 		var pbCli adapterpb.Adapter_AdaptMessageClient
-		pbCli, err = dc.executor.submit(ctx, req)
+		pbCli, err = dc.executor.submit(ctx, req, isDML(&req.frame))
 		if err != nil {
 			logger.Error("Error sending AdaptMessageRequest to server",
 				zap.Int("connectionID", int(dc.connectionID)),
@@ -253,5 +253,4 @@ func (dc *driverConnection) handleConnection(ctx context.Context) {
 			)
 		}
 	}
-
 }

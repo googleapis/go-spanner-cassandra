@@ -111,10 +111,9 @@ func NewTCPProxy(opts Options) (*TCPProxy, error) {
 				protocol:      opts.Protocol,
 				adapterClient: proxy.client,
 				executor: &requestExecutor{
-					protocol:     opts.Protocol,
-					client:       proxy.client,
-					globalState:  proxy.globalState,
-					xGoogHeaders: cl.xGoogHeaders,
+					protocol:    opts.Protocol,
+					client:      proxy.client,
+					globalState: proxy.globalState,
 				},
 				driverConn:  conn,
 				globalState: proxy.globalState,

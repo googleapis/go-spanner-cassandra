@@ -37,7 +37,7 @@ var (
 	) (adapterpb.Adapter_AdaptMessageClient, error) {
 		var md metadata.MD
 		request, err := cl.gapicClient.AdaptMessage(
-			contextWithOutgoingMetadata(ctx, cl.getMetadata()),
+			ctx,
 			req,
 			gax.WithGRPCOptions(grpc.Header(&md)),
 		)
@@ -48,11 +48,27 @@ var (
 	}
 )
 
+func isDML(frame *frame.Frame) bool {
+	switch msg := frame.Body.Message.(type) {
+	case *message.Execute:
+		// If the query id starts with `W`, it indicates this query id originates
+		// from a prpared DML statement.
+		return strings.HasPrefix(string(msg.QueryId), writeActionQueryIdPrefix)
+	case *message.Batch:
+		// Batch messsage is always DML
+		return true
+	case *message.Query:
+		// Query message is DML if query string does not start with "select"
+		return !strings.HasPrefix(strings.ToLower(msg.Query), "select")
+	default:
+		return false
+	}
+}
+
 type requestExecutor struct {
-	protocol     Protocol
-	client       *AdapterClient
-	globalState  *globalState
-	xGoogHeaders []string
+	protocol    Protocol
+	client      *AdapterClient
+	globalState *globalState
 }
 
 func (re *requestExecutor) tryInsertAttachment(
@@ -103,13 +119,19 @@ func (re *requestExecutor) prepareCassandraAttachments(
 func (re *requestExecutor) submit(
 	ctx context.Context,
 	req *requestState,
+	enableRouteToLeader bool,
 ) (adapterpb.Adapter_AdaptMessageClient, error) {
+	ctxWithMd := contextWithOutgoingMetadata(
+		ctx,
+		re.client.getMetadata(),
+		enableRouteToLeader,
+	)
 	pbCli, err := RunAdaptMessageWithRetry(
 		ctx,
 		re.client.opts.DisableAdaptMessageRetry,
 		func(ctx context.Context) (adapterpb.Adapter_AdaptMessageClient, error) {
 			return AdaptMessageGrpc(
-				ctx,
+				ctxWithMd,
 				req.pb,
 				re.client,
 			)

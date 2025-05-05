@@ -47,6 +47,9 @@ const (
 	// resourcePrefixHeader is the name of the metadata header used to indicate
 	// the resource being operated on.
 	resourcePrefixHeader = "google-cloud-resource-prefix"
+	// routeToLeaderHeader is the name of the metadata header if given
+	// batch/execute/query message need to route to leader.
+	routeToLeaderHeader = "x-goog-spanner-route-to-leader"
 )
 
 var (
@@ -57,7 +60,7 @@ var (
 	CreateSessionGrpc          = func(ctx context.Context, req *adapterpb.CreateSessionRequest, cl *AdapterClient) (*adapterpb.Session, error) {
 		var md metadata.MD
 		resp, err := cl.gapicClient.CreateSession(
-			contextWithOutgoingMetadata(ctx, cl.getMetadata()),
+			ctx,
 			req,
 			gax.WithGRPCOptions(grpc.Header(&md)),
 		)
@@ -74,8 +77,6 @@ type AdapterClient struct {
 	opts        Options
 	gapicClient *vkit.Client
 	md          metadata.MD
-	// The x-goog-* metadata to be sent with each request.
-	xGoogHeaders []string
 
 	mu      sync.RWMutex
 	session session
@@ -89,10 +90,14 @@ type session struct {
 func contextWithOutgoingMetadata(
 	ctx context.Context,
 	md metadata.MD,
+	enableRouteToLeader bool,
 ) context.Context {
 	existing, ok := metadata.FromOutgoingContext(ctx)
 	if ok {
 		md = metadata.Join(existing, md)
+	}
+	if enableRouteToLeader {
+		md = metadata.Join(md, metadata.Pairs(routeToLeaderHeader, "true"))
 	}
 	return metadata.NewOutgoingContext(ctx, md)
 }
@@ -196,8 +201,13 @@ func (cl *AdapterClient) createSession(ctx context.Context,
 		ctx,
 		func(ctx context.Context) error {
 			createTime := time.Now()
-			resp, err := CreateSessionGrpc(
+			ctxWithMd := contextWithOutgoingMetadata(
 				ctx,
+				cl.getMetadata(),
+				false,
+			)
+			resp, err := CreateSessionGrpc(
+				ctxWithMd,
 				req,
 				cl,
 			)

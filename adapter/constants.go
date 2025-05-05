@@ -20,6 +20,8 @@ const (
 	// Maximum size of local singleton state maintained across all requests.
 	// ~100mb
 	maxGlobalStateSize = 1e8 / 256
-	// prefix for prepared query id state updates
+	// Prefix for prepared query id state updates.
 	preparedQueryIdAttachmentPrefix = "pqid/"
+	// Prefix for Message.QueryId if this query id belongs to a DML statement.
+	writeActionQueryIdPrefix = "W"
 )

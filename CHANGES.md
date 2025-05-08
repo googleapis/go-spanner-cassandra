@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.3.0...v0.4.0) (2025-05-08)
+
+
+### Features
+
+* enable leader aware routing by default for all write operations ([4678fb5](https://github.com/googleapis/go-spanner-cassandra/commit/4678fb56ed784a3346f106d30a4947a81c2da912))
+
 ## [0.3.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.2.0...v0.3.0) (2025-04-23)
 
 

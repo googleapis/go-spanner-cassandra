@@ -44,3 +44,15 @@ jobs:
         run: |
           go mod tidy
           go test -v  ./... -tags=integration
+      
+      - name: Notify for daily it tests failure
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Daily integration tests against Spanner failed',
+              body: `See [failed job](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+            });

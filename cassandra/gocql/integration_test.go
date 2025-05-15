@@ -951,7 +951,7 @@ func TestCreateSessionTimeout(t *testing.T) {
 	}()
 
 	localCluster := *cluster
-	localCluster.ConnectTimeout = 1 * time.Millisecond
+	localCluster.Hosts = []string{"127.0.0.1:1"}
 	session, err := localCluster.CreateSession()
 	if err == nil {
 		session.Close()

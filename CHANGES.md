@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/googleapis/go-spanner-cassandra/compare/v0.4.0...v0.4.1) (2025-05-15)
+
+
+### Documentation
+
+* update supported versions in README ([564c147](https://github.com/googleapis/go-spanner-cassandra/commit/564c1476213710dac3deb528de97b6113aeeb942))
+
 ## [0.4.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.3.0...v0.4.0) (2025-05-08)
 
 

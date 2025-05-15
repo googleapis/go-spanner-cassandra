@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -49,7 +50,8 @@ const (
 	resourcePrefixHeader = "google-cloud-resource-prefix"
 	// routeToLeaderHeader is the name of the metadata header if given
 	// batch/execute/query message need to route to leader.
-	routeToLeaderHeader = "x-goog-spanner-route-to-leader"
+	routeToLeaderHeader       = "x-goog-spanner-route-to-leader"
+	requestsCompressionHeader = "x-response-encoding"
 )
 
 var (
@@ -69,6 +71,9 @@ var (
 		}
 		return resp, nil
 	}
+	validDBPattern = regexp.MustCompile(
+		"^projects/(?P<project>[^/]+)/instances/(?P<instance>[^/]+)/databases/(?P<database>[^/]+)$",
+	)
 )
 
 // The adapterClient encapsulates the gRPC connection / adapter stub creation.
@@ -100,6 +105,20 @@ func contextWithOutgoingMetadata(
 		md = metadata.Join(md, metadata.Pairs(routeToLeaderHeader, "true"))
 	}
 	return metadata.NewOutgoingContext(ctx, md)
+}
+
+func parseDatabaseName(
+	db string,
+) (project, instance, database string, err error) {
+	matches := validDBPattern.FindStringSubmatch(db)
+	if len(matches) == 0 {
+		return "", "", "", fmt.Errorf(
+			"failed to parse database name from %q according to pattern %q",
+			db,
+			validDBPattern.String(),
+		)
+	}
+	return matches[1], matches[2], matches[3], nil
 }
 
 func newAdapterClient(

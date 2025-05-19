@@ -28,6 +28,7 @@ import (
 	"github.com/datastax/go-cassandra-native-protocol/datatype"
 	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"github.com/datastax/go-cassandra-native-protocol/message"
+	"github.com/datastax/go-cassandra-native-protocol/primitive"
 	"google.golang.org/api/option"
 	"google.golang.org/api/option/internaloption"
 	"google.golang.org/grpc"
@@ -48,6 +49,21 @@ var (
 		internaloption.SkipDialSettingsValidation(),
 	}
 )
+
+func newFrameWithMessage(msg message.Message) *frame.Frame {
+	opCode := msg.GetOpCode()
+	return &frame.Frame{
+		Header: &frame.Header{
+			Version:  primitive.ProtocolVersion4,
+			Flags:    0,
+			StreamId: 1,
+			OpCode:   opCode,
+		},
+		Body: &frame.Body{
+			Message: msg,
+		},
+	}
+}
 
 type GrpcFuncs struct {
 	CreateSession func(ctx context.Context, req *adapterpb.CreateSessionRequest, cl *AdapterClient) (*adapterpb.Session, error)

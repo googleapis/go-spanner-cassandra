@@ -174,7 +174,7 @@ func setupAndRunSpanner(m *testing.M, spannerEndpoint string) int {
 	defer func() {
 		dropCtx, dropCancel := context.WithTimeout(
 			context.Background(),
-			2*time.Minute,
+			20*time.Minute,
 		)
 		defer dropCancel()
 		if err := adminClient.DropDatabase(dropCtx,
@@ -282,7 +282,7 @@ func createCqlTable(t *testing.T, s *gocql.Session, table string) {
 func createSpannerTable(t *testing.T, table string) {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		2*time.Minute,
+		20*time.Minute,
 	)
 	defer cancel()
 	op, err := adminClient.UpdateDatabaseDdl(

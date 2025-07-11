@@ -70,6 +70,8 @@ func (dc *driverConnection) writeMessageBackToTcp(
 	codec := frame.NewCodec()
 	header.IsResponse = true
 	header.OpCode = msg.GetOpCode()
+	// Clear all flags in manually constructed error response 
+	header.Flags = 0;
 	frm := &frame.Frame{
 		Header: header,
 		Body:   &frame.Body{Message: msg},

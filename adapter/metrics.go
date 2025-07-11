@@ -27,6 +27,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/datastax/go-cassandra-native-protocol/frame"
+	"github.com/datastax/go-cassandra-native-protocol/message"
+	"github.com/datastax/go-cassandra-native-protocol/primitive"
 	"github.com/google/uuid"
 	"go.opentelemetry.io/contrib/detectors/gcp"
 	"go.opentelemetry.io/otel/attribute"
@@ -70,6 +73,12 @@ const (
 	// Metric units
 	metricUnitMS    = "ms"
 	metricUnitCount = "1"
+
+	// Method names for major Cassandra message types
+	metricLabelValuePrepare = "Adapter.AdaptMessage.Prepare"
+	metricLabelValueExecute = "Adapter.AdaptMessage.Execute"
+	metricLabelValueBatch   = "Adapter.AdaptMessage.Batch"
+	metricLabelValueQuery   = "Adapter.AdaptMessage.Query"
 )
 
 // These are effectively const, but for testing purposes they are mutable
@@ -224,6 +233,60 @@ var (
 		"grpc.xds_client.resource_updates_valid",
 	}
 )
+
+// ConvertResponseMessageToGRPCStatus converts a Cassandra response message to a
+// gRPC status string to be recorded in built in metrics. The returned string is
+// in format like "OK" or "InvalidArgument" and does not include the concrete
+// Cassandra error message string.
+func ConvertResponseMessageToGRPCStatus(f *frame.Frame) string {
+	if f.Header.OpCode == primitive.OpCodeError {
+		switch f.Body.Message.(type) {
+		// These are all possible error message types that Spanner server will
+		// return(Go does not support swicth case fallback so we need to handle
+		// each explicitly).
+		case *message.ServerError:
+			return codes.Internal.String()
+		case *message.ReadFailure:
+			return codes.Internal.String()
+		case *message.WriteFailure:
+			return codes.Internal.String()
+		case *message.SyntaxError:
+			return codes.InvalidArgument.String()
+		case *message.Invalid:
+			return codes.InvalidArgument.String()
+		case *message.ConfigError:
+			return codes.FailedPrecondition.String()
+		case *message.Unprepared:
+			return codes.FailedPrecondition.String()
+		default:
+			// This is for Other Cassandra error messages not explicitly mapped
+			// above. We know it's an error frame due to the header OpCode check.
+			return codes.Unknown.String()
+		}
+	}
+	// If the OpCode does not indicate an error, then it's a non-error message.
+	return codes.OK.String()
+}
+
+// ConvertRequestMessageToGRPCMethodName converts a Cassandra request message
+// to a gRPC method name to be recorded in built in metrics. The returned string
+// is in format of `Adapter.AdaptMessage`+`message_type` for major traffic
+// generator message types(prepare,execute,batch,query) or empty for orther
+// message types.
+func ConvertRequestMessageToGRPCMethodName(f *frame.Frame) string {
+	switch f.Body.Message.(type) {
+	case *message.Prepare:
+		return metricLabelValuePrepare
+	case *message.Execute:
+		return metricLabelValueExecute
+	case *message.Batch:
+		return metricLabelValueBatch
+	case *message.Query:
+		return metricLabelValueQuery
+	default:
+		return ""
+	}
+}
 
 type metricInfo struct {
 	additionalAttrs    []string
@@ -421,8 +484,7 @@ type builtinMetricsTracer struct {
 // invocation on the client. The method might require multiple attempts/RPCs and
 // backoff logic to complete.
 type opTracer struct {
-	attemptCount int64     // The number of attempts made for the operation.
-	startTime    time.Time // The start time of the operation.
+	startTime time.Time // The start time of the operation.
 
 	// status is the gRPC status code of the last completed attempt.
 	status string

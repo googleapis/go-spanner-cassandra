@@ -50,6 +50,9 @@ type Options struct {
 	LogLevel string
 	// Optional google api opts. Default to empty.
 	GoogleApiOpts []option.ClientOption
+	// Optional number of concurrent requests per tcp connection. Defaults to
+	// 32768
+	MaxConcurrencyPerConn int
 }
 
 type ProxyAddressTranslator struct {
@@ -83,6 +86,7 @@ func NewCluster(
 			NumGrpcChannels:          opts.NumGrpcChannels,
 			DisableAdaptMessageRetry: opts.DisableAdaptMessageRetry,
 			GoogleApiOpts:            opts.GoogleApiOpts,
+			MaxConcurrencyPerConn:    opts.MaxConcurrencyPerConn,
 		},
 	)
 	if err != nil {

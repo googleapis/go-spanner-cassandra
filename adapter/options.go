@@ -35,4 +35,7 @@ type Options struct {
 	DisableAdaptMessageRetry bool
 	// Optional google api opts. Default to empty.
 	GoogleApiOpts []option.ClientOption
+	// Optional number of concurrent requests per tcp connection. Defaults to
+	// 32768
+	MaxConcurrencyPerConn int
 }

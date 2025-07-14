@@ -55,6 +55,12 @@ func main() {
 		"The number of channels when dial grpc connection. Default to 4.",
 	)
 
+	maxConcurrencyPerConn := flag.Int(
+		"max-concurrency-per-conn",
+		32768,
+		"The number of channels when dial grpc connection. Default to 4.",
+	)
+
 	logLevel := flag.String(
 		"log",
 		"info",
@@ -70,10 +76,11 @@ func main() {
 	}
 
 	opts := &spanner.Options{
-		DatabaseUri:     *databaseURI,
-		TCPEndpoint:     *tcpEndpoint,
-		NumGrpcChannels: *numGrpcChannels,
-		LogLevel:        *logLevel,
+		DatabaseUri:           *databaseURI,
+		TCPEndpoint:           *tcpEndpoint,
+		NumGrpcChannels:       *numGrpcChannels,
+		LogLevel:              *logLevel,
+		MaxConcurrencyPerConn: *maxConcurrencyPerConn,
 	}
 
 	cluster := spanner.NewCluster(opts)

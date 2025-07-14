@@ -22,6 +22,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"sync"
 
 	"cloud.google.com/go/spanner/adapter/apiv1/adapterpb"
 	"github.com/googleapis/go-spanner-cassandra/logger"
@@ -34,26 +35,33 @@ import (
 
 // driverConnection encapsulates a connection from a native database driver.
 type driverConnection struct {
-	connectionID  int
-	protocol      Protocol
-	driverConn    net.Conn
-	adapterClient *AdapterClient
-	executor      *requestExecutor
-	globalState   *globalState
-	md            metadata.MD
+	connectionID          int
+	protocol              Protocol
+	driverConn            net.Conn
+	adapterClient         *AdapterClient
+	executor              *requestExecutor
+	globalState           *globalState
+	md                    metadata.MD
+	codec                 frame.Codec
+	rawCodec              frame.RawCodec
+	maxConcurrencyPerConn int
+}
+
+// requestJob holds the data needed for a worker to process a single request.
+type requestJob struct {
+	payload *[]byte
+	header  *frame.Header
 }
 
 func (dc *driverConnection) constructPayload() (*[]byte, *frame.Header, error) {
-	rawCodec := frame.NewRawCodec()
-
 	// Decode cassandra frame to Header + raw body.
-	rawFrame, err := rawCodec.DecodeRawFrame(dc.driverConn)
+	rawFrame, err := dc.rawCodec.DecodeRawFrame(dc.driverConn)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	rawHeader := bytes.NewBuffer(nil)
-	if err := rawCodec.EncodeHeader(rawFrame.Header, rawHeader); err != nil {
+	if err := dc.rawCodec.EncodeHeader(rawFrame.Header, rawHeader); err != nil {
 		return nil, nil, err
 	}
 
@@ -67,7 +75,6 @@ func (dc *driverConnection) writeMessageBackToTcp(
 	header *frame.Header,
 	msg message.Message,
 ) error {
-	codec := frame.NewCodec()
 	header.IsResponse = true
 	header.OpCode = msg.GetOpCode()
 	// Clear all flags in manually constructed error response 
@@ -77,7 +84,7 @@ func (dc *driverConnection) writeMessageBackToTcp(
 		Body:   &frame.Body{Message: msg},
 	}
 	buf := bytes.NewBuffer(nil)
-	err := codec.EncodeFrame(frm, buf)
+	err := dc.codec.EncodeFrame(frm, buf)
 	if err != nil {
 		return err
 	}
@@ -119,56 +126,80 @@ func (dc *driverConnection) writeGrpcResponseToTcp(
 			payloads = append(payloads, resp.Payload)
 		}
 	}
-	payloadsLen := len(payloads)
-	var payloadToWrite []byte
-	if payloadsLen == 0 {
+	if len(payloads) == 0 {
 		return nil // No payload received, nothing to write.
 	}
 
 	// If there is only one response, it consists a complete message frame and we
 	// can directly wirte it back.
-	if payloadsLen == 1 {
-		payloadToWrite = payloads[0]
-	} else {
-		// Merge payloads (last + first...second last) since last payload is always
-		// the header when there are more than one responses received.
-		lastPayload := payloads[payloadsLen-1]
-		mergedPayload := bytes.Buffer{}
-		mergedPayload.Write(lastPayload)
-
-		for i := range payloads[:payloadsLen-1] {
-			mergedPayload.Write(payloads[i])
-		}
-		payloadToWrite = mergedPayload.Bytes()
-	}
-
-	_, err = dc.driverConn.Write(payloadToWrite)
-	if err != nil {
-		logger.Debug("Error writing merged payload to connection",
-			zap.Int("connectionID", dc.connectionID),
-			zap.Error(err),
-		)
+	if len(payloads) == 1 {
+		_, err := dc.driverConn.Write(payloads[0])
 		return err
 	}
 
-	return nil
+	// Merge payloads (last + first...second last) since last payload is always
+	// the header when there are more than one responses received.
+	totalSize := 0
+	for _, p := range payloads {
+		totalSize += len(p)
+	}
+
+	payloadToWrite := make([]byte, totalSize)
+
+	lastPayload := payloads[len(payloads)-1]
+	offset := copy(payloadToWrite, lastPayload)
+	for _, p := range payloads[:len(payloads)-1] {
+		offset += copy(payloadToWrite[offset:], p)
+	}
+
+	_, err = dc.driverConn.Write(payloadToWrite)
+	return err
+}
+
+// worker is a long-lived goroutine that processes requests from the
+// requestChan.
+func (dc *driverConnection) worker(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	requestChan <-chan requestJob,
+) {
+	for job := range requestChan {
+		dc.processAndRespond(ctx, wg, job.payload, job.header)
+	}
 }
 
 func (dc *driverConnection) handleConnection(ctx context.Context) {
+	// Use a WaitGroup to track all in-flight request goroutines.
+	var wg sync.WaitGroup
+	// Create a channel to dispatch jobs to a fixed pool of worker goroutines.
+	requestChan := make(chan requestJob)
+
+	// Start a fixed pool of worker goroutines.
+	for range dc.maxConcurrencyPerConn {
+		go dc.worker(ctx, &wg, requestChan)
+	}
+
 	defer func() {
+		// Signal to workers that no more jobs will be sent.
+		close(requestChan)
+		// Before closing the connection, wait for all processing goroutines to
+		// finish.
+		wg.Wait()
 		logger.Debug(
-			"Exiting recv loop",
+			"All in-flight requests finished. Exiting recv loop.",
 			zap.Int("connection id", dc.connectionID),
 		)
 		dc.driverConn.Close()
 	}()
+
+	// This loop now acts as a reader/dispatcher.
 	for {
 		payload, header, err := dc.constructPayload()
 		if err != nil {
 			// Only EOF error is expected if the peer closes the connection
 			// gracefully.
 			if !errors.Is(err, io.EOF) {
-				logger.Error("Error constructing AdaptMessagePayload ",
+				logger.Error("Error constructing payload, closing connection",
 					zap.Int("connectionID", dc.connectionID),
 					zap.Error(err))
 			}
@@ -178,81 +209,98 @@ func (dc *driverConnection) handleConnection(ctx context.Context) {
 			break
 		}
 
-		codec := frame.NewCodec()
-		frame, err := codec.DecodeFrame(bytes.NewBuffer(*payload))
-		if err != nil {
-			logger.Error("Error decoding frame from payload ",
-				zap.Int("connectionID", dc.connectionID),
-				zap.Error(err))
-			// Return a syntax error back to the driver if the received payload is not
-			// a valid Cassandra frame protocol.
-			_ = dc.writeMessageBackToTcp(
-				header,
-				&message.SyntaxError{ErrorMessage: err.Error()},
-			)
-			continue
+		job := requestJob{
+			payload: payload,
+			header:  header,
 		}
 
-		session, err := dc.adapterClient.getOrRefreshSession(ctx)
-		if err != nil {
-			logger.Error("Error getting or refreshing session ",
-				zap.Int("connectionID", dc.connectionID),
-				zap.Error(err))
-			// Return a server error back to the driver if session retrieval or
-			// recreation is failed.
-			_ = dc.writeMessageBackToTcp(
-				frame.Header,
-				&message.ServerError{ErrorMessage: err.Error()},
-			)
-			continue
-		}
+		wg.Add(1)
+		// Dispatch the job to a free worker. This will block if all workers are
+		// busy.
+		requestChan <- job
+	}
+}
 
-		req := &requestState{
-			pb: &adapterpb.AdaptMessageRequest{
-				Name:     session.name,
-				Protocol: dc.protocol.Name(),
-				Payload:  *payload,
-			},
-			frame: *frame,
-		}
+// processAndRespond handles the full lifecycle of a single request. It is
+// called by a worker goroutine.
+func (dc *driverConnection) processAndRespond(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	payload *[]byte,
+	header *frame.Header,
+) {
+	// Decrease wait group counter.
+	defer wg.Done()
 
-		// Pass attachments, send back any error messages to the driver and skips
-		// later grpc call.
-		if errMsg := dc.executor.prepareCassandraAttachments(frame, req); errMsg != nil {
-			_ = dc.writeMessageBackToTcp(frame.Header, errMsg)
-			// Since a manual constructed message was already sent back to the
-			// driver from this client successfully, skip rest of grpc calls to the
-			// server.
-			continue
-		}
+	frame, err := dc.codec.DecodeFrame(bytes.NewBuffer(*payload))
+	if err != nil {
+		logger.Error("Error decoding frame from payload",
+			zap.Int("connectionID", dc.connectionID),
+			zap.Error(err))
+		// Return a syntax error back to the driver if the received payload is not
+		// a valid Cassandra frame protocol.
+		_ = dc.writeMessageBackToTcp(
+			header,
+			&message.SyntaxError{ErrorMessage: err.Error()},
+		)
+		dc.driverConn.Close()
+		return
+	}
 
-		// Send the grpc request.
-		var pbCli adapterpb.Adapter_AdaptMessageClient
-		pbCli, err = dc.executor.submit(ctx, req, isDML(&req.frame))
-		if err != nil {
-			logger.Error("Error sending AdaptMessageRequest to server",
-				zap.Int("connectionID", int(dc.connectionID)),
-				zap.Error(err),
-			)
-			// If requests was not successfully sent to server, return a server error
-			// and skip reading responses
-			// from the server.
-			_ = dc.writeMessageBackToTcp(
-				frame.Header,
-				&message.ServerError{ErrorMessage: err.Error()},
-			)
-			continue
-		}
-		// Read grpc response and write back to local tcp connection.
-		if err = dc.writeGrpcResponseToTcp(pbCli); err != nil {
-			logger.Error("Error writing grpc response back to tcp",
-				zap.Int("connectionID", int(dc.connectionID)),
-				zap.Error(err),
-			)
-			_ = dc.writeMessageBackToTcp(
-				frame.Header,
-				&message.ServerError{ErrorMessage: err.Error()},
-			)
-		}
+	session, err := dc.adapterClient.getOrRefreshSession(ctx)
+	if err != nil {
+		logger.Error("Error getting or refreshing session",
+			zap.Int("connectionID", dc.connectionID),
+			zap.Error(err))
+		// Return a server error back to the driver if session retrieval or
+		// recreation is failed.
+		_ = dc.writeMessageBackToTcp(
+			frame.Header,
+			&message.ServerError{ErrorMessage: err.Error()},
+		)
+		return
+	}
+
+	req := &requestState{
+		pb: &adapterpb.AdaptMessageRequest{
+			Name:     session.name,
+			Protocol: dc.protocol.Name(),
+			Payload:  *payload,
+		},
+		frame: *frame,
+	}
+
+	// Pass attachments, send back any error messages to the driver and skips
+	// later grpc call.
+	if errMsg := dc.executor.prepareCassandraAttachments(frame, req); errMsg != nil {
+		// Since a manual constructed message was already sent back to the
+		// driver from this client successfully, skip rest of grpc calls to the
+		// server.
+		_ = dc.writeMessageBackToTcp(frame.Header, errMsg)
+		return
+	}
+
+	// Send the grpc request.
+	pbCli, err := dc.executor.submit(ctx, req, isDML(&req.frame))
+	if err != nil {
+		logger.Error("Error sending AdaptMessageRequest to server",
+			zap.Int("connectionID", int(dc.connectionID)),
+			zap.Error(err),
+		)
+		// If requests was not successfully sent to server, return a server error
+		// and skip reading responses
+		// from the server.
+		_ = dc.writeMessageBackToTcp(
+			frame.Header,
+			&message.ServerError{ErrorMessage: err.Error()},
+		)
+		return
+	}
+	// Read grpc response and write back to local tcp connection.
+	if err = dc.writeGrpcResponseToTcp(pbCli); err != nil {
+		logger.Error("Error writing grpc response back to tcp",
+			zap.Int("connectionID", int(dc.connectionID)),
+			zap.Error(err),
+		)
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"github.com/googleapis/go-spanner-cassandra/logger"
 
 	"go.uber.org/zap"
@@ -87,6 +88,14 @@ func NewTCPProxy(opts Options) (*TCPProxy, error) {
 		zap.String("tcp_port", proxy.listener.Addr().String()),
 	)
 
+	// Init codec for all connection to reuse
+	codec := frame.NewCodec()
+	rawCodec := frame.NewRawCodec()
+
+	if opts.MaxConcurrencyPerConn <= 0 {
+		opts.MaxConcurrencyPerConn = 32768
+	}
+
 	// Start accept loop.
 	go func() {
 		for {
@@ -115,9 +124,12 @@ func NewTCPProxy(opts Options) (*TCPProxy, error) {
 					client:      proxy.client,
 					globalState: proxy.globalState,
 				},
-				driverConn:  conn,
-				globalState: proxy.globalState,
-				md:          cl.md,
+				driverConn:            conn,
+				globalState:           proxy.globalState,
+				md:                    cl.md,
+				codec:                 codec,
+				rawCodec:              rawCodec,
+				maxConcurrencyPerConn: opts.MaxConcurrencyPerConn,
 			}
 
 			go dc.handleConnection(ctx)

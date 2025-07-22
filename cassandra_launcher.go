@@ -61,6 +61,12 @@ func main() {
 		"Log level. Default to info.",
 	)
 
+	maxCommitDelay := flag.Int(
+		"max_commit_delay",
+		0,
+		"The maximum delay in milliseconds. Default is 0 (disabled).",
+	)
+
 	flag.Parse()
 
 	if *databaseURI == "" {
@@ -74,6 +80,7 @@ func main() {
 		TCPEndpoint:     *tcpEndpoint,
 		NumGrpcChannels: *numGrpcChannels,
 		LogLevel:        *logLevel,
+		MaxCommitDelay:  *maxCommitDelay,
 	}
 
 	cluster := spanner.NewCluster(opts)

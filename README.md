@@ -170,6 +170,12 @@ The following list contains the most frequently used startup options for Spanner
 -log <LogLevel>
   * Log level used by the global zap logger.
   * Default: info
+
+-max_commit_delay <MaxCommitDelay>
+  * The maximum commit delay in milliseconds. The valid range is 0-500.
+  * If you don't set a commit delay time, Spanner might set a small delay for you if it thinks that will amortize the cost of your writes.
+  * You can disable commit delays for applications that are highly latency sensitive by setting the maximum commit delay time to 0.
+  * Default: 0 (disabled)
 ```
 
 ## Supported Cassandra Versions

@@ -46,6 +46,8 @@ type Options struct {
 	// Optional boolean indicate whether to disable automatic grpc retry for
 	// AdaptMessage API. Defauls to false.
 	DisableAdaptMessageRetry bool
+	// The maximum delay in milliseconds. Default is 0 (disabled).
+	MaxCommitDelay int
 	// Optional log level. Defaults to info.
 	LogLevel string
 	// Optional google api opts. Default to empty.
@@ -82,6 +84,7 @@ func NewCluster(
 			Protocol:                 &cassandraProtocol{},
 			NumGrpcChannels:          opts.NumGrpcChannels,
 			DisableAdaptMessageRetry: opts.DisableAdaptMessageRetry,
+			MaxCommitDelay:           opts.MaxCommitDelay,
 			GoogleApiOpts:            opts.GoogleApiOpts,
 		},
 	)

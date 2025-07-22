@@ -24,4 +24,6 @@ const (
 	preparedQueryIdAttachmentPrefix = "pqid/"
 	// Prefix for Message.QueryId if this query id belongs to a DML statement.
 	writeActionQueryIdPrefix = "W"
+	// Attachment key for max commit delay.
+	maxCommitDelay = "max_commit_delay"
 )

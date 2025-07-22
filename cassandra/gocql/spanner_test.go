@@ -42,8 +42,9 @@ func setupCluster(
 	adapter.MockCreateSessionGrpc()
 	adapter.MockAdaptMessageGrpc(returnResponsesInChunks)
 	opts := &Options{
-		DatabaseUri:   "projects/test/instances/test/databases/test",
-		GoogleApiOpts: adapter.SkipAuthOpts,
+		DatabaseUri:    "projects/test/instances/test/databases/test",
+		GoogleApiOpts:  adapter.SkipAuthOpts,
+		MaxCommitDelay: 12,
 	}
 
 	cluster := NewCluster(opts)

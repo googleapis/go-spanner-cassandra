@@ -114,6 +114,7 @@ func NewTCPProxy(opts Options) (*TCPProxy, error) {
 					protocol:    opts.Protocol,
 					client:      proxy.client,
 					globalState: proxy.globalState,
+					opts:        &proxy.opts,
 				},
 				driverConn:  conn,
 				globalState: proxy.globalState,

@@ -18,7 +18,7 @@ package adapter
 
 import (
 	"context"
-
+	"strconv"
 	"strings"
 
 	"cloud.google.com/go/spanner/adapter/apiv1/adapterpb"
@@ -69,6 +69,7 @@ type requestExecutor struct {
 	protocol    Protocol
 	client      *AdapterClient
 	globalState *globalState
+	opts        *Options
 }
 
 func (re *requestExecutor) tryInsertAttachment(
@@ -92,12 +93,19 @@ func (re *requestExecutor) prepareCassandraAttachments(
 	switch msg := frame.Body.Message.(type) {
 	case *message.Execute:
 		req.pb.Attachments = make(map[string]string)
+		if re.opts.MaxCommitDelay > 0 && isDML(frame) {
+			req.pb.Attachments[maxCommitDelay] = strconv.Itoa(re.opts.MaxCommitDelay)
+		}
 		err := re.tryInsertAttachment(msg.QueryId, req.pb.Attachments)
 		if err != nil {
 			return err
 		}
 	case *message.Batch:
 		req.pb.Attachments = make(map[string]string)
+		// Batch is always DML.
+		if re.opts.MaxCommitDelay > 0 {
+			req.pb.Attachments[maxCommitDelay] = strconv.Itoa(re.opts.MaxCommitDelay)
+		}
 		for _, child := range msg.Children {
 			// Only prepare <pqid, cql_query> attachment pair for prepared child in
 			// batch.

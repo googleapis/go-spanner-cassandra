@@ -27,6 +27,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"math/rand"
 	"net"
 	"os"
 	"reflect"
@@ -184,10 +185,14 @@ func setupAndRunSpanner(m *testing.M, spannerEndpoint string) int {
 		defer adminClient.Close()
 	}()
 
+	rand.Seed(time.Now().UnixNano())
+	randomMaxCommitDelay := rand.Intn(501)
+
 	opts := &Options{
 		DatabaseUri:     databaseUri,
 		SpannerEndpoint: spannerEndpoint,
 		LogLevel:        "warn",
+		MaxCommitDelay:  randomMaxCommitDelay,
 	}
 
 	cluster = NewCluster(opts)

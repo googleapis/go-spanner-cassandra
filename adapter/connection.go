@@ -41,19 +41,19 @@ type driverConnection struct {
 	executor      *requestExecutor
 	globalState   *globalState
 	md            metadata.MD
+	codec         frame.Codec
+	rawCodec      frame.RawCodec
 }
 
 func (dc *driverConnection) constructPayload() (*[]byte, *frame.Header, error) {
-	rawCodec := frame.NewRawCodec()
-
 	// Decode cassandra frame to Header + raw body.
-	rawFrame, err := rawCodec.DecodeRawFrame(dc.driverConn)
+	rawFrame, err := dc.rawCodec.DecodeRawFrame(dc.driverConn)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	rawHeader := bytes.NewBuffer(nil)
-	if err := rawCodec.EncodeHeader(rawFrame.Header, rawHeader); err != nil {
+	if err := dc.rawCodec.EncodeHeader(rawFrame.Header, rawHeader); err != nil {
 		return nil, nil, err
 	}
 
@@ -67,17 +67,16 @@ func (dc *driverConnection) writeMessageBackToTcp(
 	header *frame.Header,
 	msg message.Message,
 ) error {
-	codec := frame.NewCodec()
 	header.IsResponse = true
 	header.OpCode = msg.GetOpCode()
-	// Clear all flags in manually constructed error response 
-	header.Flags = 0;
+	// Clear all flags in manually constructed error response
+	header.Flags = 0
 	frm := &frame.Frame{
 		Header: header,
 		Body:   &frame.Body{Message: msg},
 	}
 	buf := bytes.NewBuffer(nil)
-	err := codec.EncodeFrame(frm, buf)
+	err := dc.codec.EncodeFrame(frm, buf)
 	if err != nil {
 		return err
 	}
@@ -178,8 +177,7 @@ func (dc *driverConnection) handleConnection(ctx context.Context) {
 			break
 		}
 
-		codec := frame.NewCodec()
-		frame, err := codec.DecodeFrame(bytes.NewBuffer(*payload))
+		frame, err := dc.codec.DecodeFrame(bytes.NewBuffer(*payload))
 		if err != nil {
 			logger.Error("Error decoding frame from payload ",
 				zap.Int("connectionID", dc.connectionID),

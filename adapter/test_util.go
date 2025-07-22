@@ -47,6 +47,8 @@ var (
 		option.WithoutAuthentication(),
 		internaloption.SkipDialSettingsValidation(),
 	}
+	codec    = frame.NewCodec()
+	rawCodec = frame.NewRawCodec()
 )
 
 type GrpcFuncs struct {
@@ -172,7 +174,6 @@ func (mc *Mock_Cassandra_AdaptMessageClient) constructAdaptMessageResponse(
 
 	var payload []byte
 	if mc.returnResponsesInChunks {
-		rawCodec := frame.NewRawCodec()
 		if !mc.bodyResponsesReturned {
 			rawFrame, err := rawCodec.ConvertToRawFrame(frm)
 			if err != nil {
@@ -188,7 +189,6 @@ func (mc *Mock_Cassandra_AdaptMessageClient) constructAdaptMessageResponse(
 			payload = rawHeader.Bytes()
 		}
 	} else {
-		codec := frame.NewCodec()
 		buf := bytes.NewBuffer(nil)
 		err := codec.EncodeFrame(frm, buf)
 		if err != nil {
@@ -492,7 +492,6 @@ func MockAdaptMessageGrpc(returnResponsesInChunks bool) {
 		if req.Protocol != "cassandra" {
 			return nil, errors.New("unsupported protocol type")
 		}
-		codec := frame.NewCodec()
 		frame, err := codec.DecodeFrame(bytes.NewBuffer(req.Payload))
 		if err != nil {
 			fmt.Println(err)

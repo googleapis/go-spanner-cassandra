@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/datastax/go-cassandra-native-protocol/frame"
 	"github.com/googleapis/go-spanner-cassandra/logger"
 
 	"go.uber.org/zap"
@@ -118,6 +119,8 @@ func NewTCPProxy(opts Options) (*TCPProxy, error) {
 				driverConn:  conn,
 				globalState: proxy.globalState,
 				md:          cl.md,
+				codec:       frame.NewCodec(),
+				rawCodec:    frame.NewRawCodec(),
 			}
 
 			go dc.handleConnection(ctx)

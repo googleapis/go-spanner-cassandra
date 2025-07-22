@@ -29,7 +29,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var zapLog *zap.Logger
+var (
+	zapLog *zap.Logger
+	codec  = frame.NewCodec()
+)
 
 func SetupGlobalLogger(level string) error {
 	var config zap.Config
@@ -76,7 +79,6 @@ func Fatal(message string, fields ...zap.Field) {
 }
 
 func DumpRequest(req *adapterpb.AdaptMessageRequest) error {
-	codec := frame.NewCodec()
 	frame, err := codec.DecodeFrame(bytes.NewBuffer(req.Payload))
 	if err != nil {
 		Debug("Error dumping request,", zap.Error(err))
@@ -90,7 +92,6 @@ func DumpRequest(req *adapterpb.AdaptMessageRequest) error {
 }
 
 func DumpResponse(resp *adapterpb.AdaptMessageResponse) error {
-	codec := frame.NewCodec()
 	frame, err := codec.DecodeFrame(bytes.NewBuffer(resp.Payload))
 	if err != nil {
 		Debug("Error dumping response,", zap.Error(err))

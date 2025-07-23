@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.4.0...v0.5.0) (2025-07-23)
+
+
+### Features
+
+* support setting global max commit delay for all dmls ([761e8c8](https://github.com/googleapis/go-spanner-cassandra/commit/761e8c8852ed3e0c30388db517a6c1608a1cf4bd))
+
+
+### Bug Fixes
+
+* clear header flags in manually constructed error response ([3327059](https://github.com/googleapis/go-spanner-cassandra/commit/332705969663e021c4df71bd0574e6293ae0edc0))
+
+
+### Documentation
+
+* add unsupported features from apache/gocql ([509cb47](https://github.com/googleapis/go-spanner-cassandra/commit/509cb474017dcc513894935727baab8004652c5b))
+* update supported versions in README ([564c147](https://github.com/googleapis/go-spanner-cassandra/commit/564c1476213710dac3deb528de97b6113aeeb942))
+
 ## [0.4.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.3.0...v0.4.0) (2025-05-08)
 
 

@@ -28,22 +28,6 @@ import (
 )
 
 func TestIsDML(t *testing.T) {
-	// Helper function to create a frame with a given message body
-	newFrameWithMessage := func(msg message.Message) *frame.Frame {
-		opCode := msg.GetOpCode()
-		return &frame.Frame{
-			Header: &frame.Header{
-				Version:  primitive.ProtocolVersion4, // Or any relevant version
-				Flags:    0,
-				StreamId: 1,
-				OpCode:   opCode,
-			},
-			Body: &frame.Body{
-				Message: msg,
-			},
-		}
-	}
-
 	testCases := []struct {
 		name     string
 		frame    *frame.Frame

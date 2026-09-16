@@ -22,6 +22,11 @@ package adapter
 import (
 	"fmt"
 	"testing"
+
+	"github.com/datastax/go-cassandra-native-protocol/frame"
+	"github.com/datastax/go-cassandra-native-protocol/message"
+	"github.com/datastax/go-cassandra-native-protocol/primitive"
+	"google.golang.org/grpc/codes"
 )
 
 // TODO: Add unit tests to verify metric population affter integration with
@@ -85,4 +90,177 @@ func parseHex(hexStr string) (int64, error) {
 	var value int64
 	_, err := fmt.Sscanf(hexStr, "%x", &value)
 	return value, err
+}
+
+func TestConvertResponseMessageToGRPCStatus(t *testing.T) {
+	testCases := []struct {
+		name           string
+		frame          *frame.Frame
+		expectedGOCode codes.Code
+	}{
+		{
+			name:           "Non-error message",
+			frame:          newFrameWithMessage(&message.RowsResult{}),
+			expectedGOCode: codes.OK,
+		},
+		{
+			name: "ServerError",
+			frame: newFrameWithMessage(&message.ServerError{
+				ErrorMessage: "Simulated server error",
+			}),
+			expectedGOCode: codes.Internal,
+		},
+		{
+			name: "ReadFailure",
+			frame: newFrameWithMessage(&message.ReadFailure{
+				ErrorMessage: "Simulated read failure",
+			}),
+			expectedGOCode: codes.Internal,
+		},
+		{
+			name: "WriteFailure",
+			frame: newFrameWithMessage(&message.WriteFailure{
+				ErrorMessage: "Simulated write failure",
+			}),
+			expectedGOCode: codes.Internal,
+		},
+		{
+			name: "SyntaxError",
+			frame: newFrameWithMessage(&message.SyntaxError{
+				ErrorMessage: "Simulated syntax error",
+			}),
+			expectedGOCode: codes.InvalidArgument,
+		},
+		{
+			name: "Invalid",
+			frame: newFrameWithMessage(&message.Invalid{
+				ErrorMessage: "Simulated invalid error",
+			}),
+			expectedGOCode: codes.InvalidArgument,
+		},
+		{
+			name: "ConfigError",
+			frame: newFrameWithMessage(&message.ConfigError{
+				ErrorMessage: "Simulated config error",
+			}),
+			expectedGOCode: codes.FailedPrecondition,
+		},
+		{
+			name: "Unprepared statement error",
+			frame: newFrameWithMessage(
+				&message.Unprepared{
+					ErrorMessage: "Simulated unprepared statement",
+					Id:           []byte{0xDE, 0xAD},
+				},
+			),
+			expectedGOCode: codes.FailedPrecondition,
+		},
+		{
+			name: "Other error(default case)",
+			frame: newFrameWithMessage(&message.AuthenticationError{
+				ErrorMessage: "Simulated authentication error",
+			}),
+			expectedGOCode: codes.Unknown,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualStatusString := ConvertResponseMessageToGRPCStatus(
+				tc.frame,
+			) // Function being tested
+			expectedStatusString := tc.expectedGOCode.String()
+
+			if actualStatusString != expectedStatusString {
+				var messageDetail string
+				if tc.frame.Header == nil {
+					messageDetail = "Frame Header is nil"
+				} else if tc.frame.Body == nil {
+					messageDetail = fmt.Sprintf("OpCode: %s, Frame Body is nil", tc.frame.Header.OpCode)
+				} else if tc.frame.Body.Message == nil {
+					messageDetail = fmt.Sprintf("OpCode: %s, MessageType: nil message content", tc.frame.Header.OpCode)
+				} else {
+					messageDetail = fmt.Sprintf("OpCode: %s, MessageType: %T", tc.frame.Header.OpCode, tc.frame.Body.Message)
+				}
+
+				t.Errorf(
+					"ConvertResponseMessageToGRPCStatus() for test case '%s' (%s) = '%s', want '%s'",
+					tc.name,
+					messageDetail,
+					actualStatusString,
+					expectedStatusString,
+				)
+			}
+		})
+	}
+}
+
+func TestConvertRequestMessageToGRPCMethodName(t *testing.T) {
+	testCases := []struct {
+		name     string
+		frame    *frame.Frame
+		expected string
+	}{
+		{
+			name: "Prepare message",
+			frame: newFrameWithMessage(
+				&message.Prepare{Query: "SELECT * FROM test"},
+			),
+			expected: metricLabelValuePrepare,
+		},
+		{
+			name: "Execute message",
+			frame: newFrameWithMessage(
+				&message.Execute{QueryId: []byte{0x01, 0x02}},
+			),
+			expected: metricLabelValueExecute,
+		},
+		{
+			name: "Batch message",
+			frame: newFrameWithMessage(
+				&message.Batch{Type: primitive.BatchTypeLogged},
+			),
+			expected: metricLabelValueBatch,
+		},
+		{
+			name: "Query message",
+			frame: newFrameWithMessage(
+				&message.Query{Query: "INSERT INTO test VALUES (1)"},
+			),
+			expected: metricLabelValueQuery,
+		},
+		{
+			name: "Other message (default case)",
+			frame: newFrameWithMessage(
+				&message.Startup{Options: map[string]string{}},
+			),
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := ConvertRequestMessageToGRPCMethodName(
+				tc.frame,
+			)
+			if actual != tc.expected {
+				var messageDetail string
+				if tc.frame.Body != nil && tc.frame.Body.Message != nil {
+					messageDetail = fmt.Sprintf("MessageType: %T", tc.frame.Body.Message)
+				} else if tc.frame.Body != nil {
+					messageDetail = "MessageType: nil message content"
+				} else {
+					messageDetail = "Frame Body is nil"
+				}
+
+				t.Errorf(
+					"ConvertRequestMessageToGRPCMethodName() for test case '%s' (%s) = '%s', want '%s'",
+					tc.name,
+					messageDetail,
+					actual,
+					tc.expected,
+				)
+			}
+		})
+	}
 }

@@ -31,7 +31,7 @@ RUN go build -o cassandra_launcher
 # Use a smaller clean runtime image
 FROM alpine:latest AS runtime
 
-# Pull latest alpine packages (including dependencies)
+# Use a clean runtime image (including dependencies)
 RUN apk update && apk upgrade --no-cache
 
 # Copy the binary from the builder stage

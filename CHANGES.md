@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.1](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.0...v0.7.1) (2026-11-02)
+
+### Security
+
+* Pull latest dependencies for Alpine distro to ensure latest security patches are deployed. 
+
 ## [0.7.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.6.1...v0.7.0) (2026-06-03)
 
 

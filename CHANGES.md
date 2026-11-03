@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.1](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.0...v0.7.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* upgrade Alpine runtime packages in Dockerfile for security patches ([2094f81](https://github.com/googleapis/go-spanner-cassandra/commit/2094f81cda647447fb5ba9e06ef7fb33203b7c48))
+* upgrade Alpine runtime packages in Dockerfile for security patches ([157ac74](https://github.com/googleapis/go-spanner-cassandra/commit/157ac74ffa9a686320faaa6a8ee87246eb773850))
+
 ## [0.7.0](https://github.com/googleapis/go-spanner-cassandra/compare/v0.6.1...v0.7.0) (2026-06-03)
 
 

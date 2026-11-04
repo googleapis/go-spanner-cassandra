@@ -10,7 +10,7 @@
 # spanner-cassandra-adapter \
 # --database-uri projects/your-project/instances/your-instance/databases/your-database
 
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 # Set the working directory inside the container to the project root
 WORKDIR /app

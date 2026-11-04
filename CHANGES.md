@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.1...v0.7.2) (2026-11-04)
+
+
+### Bug Fixes
+
+* upgrade Go builder to 1.26 and bump vulnerable Go dependencies ([#94](https://github.com/googleapis/go-spanner-cassandra/issues/94)) ([f3d3f00](https://github.com/googleapis/go-spanner-cassandra/commit/f3d3f007c06387ae8f7df0ef0e5cdc313fefd728))
+
 ## [0.7.1](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.0...v0.7.1) (2026-11-03)
 
 

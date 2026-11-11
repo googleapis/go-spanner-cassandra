@@ -4,6 +4,9 @@ on:
   # Run unit tests on all push since they don't consume any resources
   push:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Unit Tests

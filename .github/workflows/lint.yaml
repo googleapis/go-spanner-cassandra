@@ -5,6 +5,9 @@ on:
     branches: [ "main" ]
 
 
+permissions:
+  contents: read
+
 jobs:
   golangLint:
     name: Go Lint Scan

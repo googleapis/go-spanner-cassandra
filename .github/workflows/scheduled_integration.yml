@@ -10,6 +10,9 @@ on:
 env:
   INTEGRATION_TEST_INSTANCE: ${{secrets.INTEGRATION_TEST_INSTANCE}}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Daily Scheduled Integration Tests

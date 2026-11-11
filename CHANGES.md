@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.3](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.2...v0.7.3) (2026-11-11)
+
+
+### Bug Fixes
+
+* upgrade Go dependencies and switch runtime image to distroless ([c9c6271](https://github.com/googleapis/go-spanner-cassandra/commit/c9c6271878a9bcfa6f529b878a4d160b9d758d68))
+* upgrade Go dependencies and switch runtime image to distroless ([4928aaf](https://github.com/googleapis/go-spanner-cassandra/commit/4928aafec8fea20f8788d92c777d4ba9fd081f7a))
+
 ## [0.7.2](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.1...v0.7.2) (2026-11-04)
 
 

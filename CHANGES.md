@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.4](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.3...v0.7.4) (2026-11-11)
+
+
+### Bug Fixes
+
+* upgrade google.golang.org/grpc to v1.83.2 ([#100](https://github.com/googleapis/go-spanner-cassandra/issues/100)) ([fea7d06](https://github.com/googleapis/go-spanner-cassandra/commit/fea7d06ef4091caf0ad46fe9e2714d1798efa5b1))
+
 ## [0.7.3](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.2...v0.7.3) (2026-11-11)
 
 

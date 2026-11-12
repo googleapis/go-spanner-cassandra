@@ -1,7 +1,10 @@
 name: Build and Push Docker Image to Google Artifact Registry
 
 on:
-  # This allows manual activation of this action for testing.
+  # Manual runs are dry runs for testing: they build the image without pushing it
+  # and only list the images that a release would tag as deprecated. They never
+  # create, move, or overwrite registry tags. To re-publish a release, re-run its
+  # original tag-push workflow run instead.
   workflow_dispatch:
   push:
     tags:
@@ -13,6 +16,15 @@ env:
   GITHUB_REF: ${{ github.ref }}
   IMAGE: cassandra-adapter
   GCR_HOSTNAME: gcr.io/cloud-spanner-adapter
+  # Artifact Registry path of the image above, used to list and tag images.
+  AR_IMAGE: us-docker.pkg.dev/cloud-spanner-adapter/gcr.io/cassandra-adapter
+
+# Release runs are serialized so that two releases can't race on :latest or on the
+# deprecation tags. Manual runs use a separate group so they never delay or cancel
+# a release run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -37,16 +49,99 @@ jobs:
       # Configure docker to use the gcloud command-line tool as a credential helper
       - run: gcloud auth configure-docker gcr.io
 
+      # Only pushes of release tags publish images. :latest only moves, and older
+      # images are only deprecated, when the tag is the newest vX.Y.Z release, so
+      # re-running an older release can't move :latest backwards.
+      - name: Determine publish mode
+        id: mode
+        run: |
+          set -euo pipefail
+          PUBLISH=false
+          NEWEST=false
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/tags/v* ]]; then
+            PUBLISH=true
+            # The tag being released is included in case GitHub's tag list is briefly stale.
+            NEWEST_RELEASE_TAG=$(
+              {
+                git ls-remote --tags --refs "https://github.com/$GITHUB_REPOSITORY.git" 'v*' | sed 's|.*refs/tags/||'
+                echo "$GITHUB_REF_NAME"
+              } | { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -V | tail -n 1
+            )
+            if [[ "$GITHUB_REF_NAME" == "$NEWEST_RELEASE_TAG" ]]; then
+              NEWEST=true
+            fi
+          fi
+          echo "Publish images: $PUBLISH, newest release: $NEWEST"
+          echo "publish=$PUBLISH" >> "$GITHUB_OUTPUT"
+          echo "newest=$NEWEST" >> "$GITHUB_OUTPUT"
+
+      # Record the images that exist before the build. A successful release tags
+      # them as deprecated; its own new images can't be in this list because they
+      # don't exist yet. Images that are already tagged as deprecated are skipped.
+      # In manual runs, this list is the dry run.
+      - name: List prior images
+        run: |
+          set -euo pipefail
+          gcloud --verbosity=error artifacts docker images list "$AR_IMAGE" \
+            --include-tags \
+            --filter='NOT tags:deprecated-public-image-*' \
+            --format='value(version)' > "$RUNNER_TEMP/prior_images.txt"
+          echo "Images that a successful release would tag as deprecated:"
+          cat "$RUNNER_TEMP/prior_images.txt"
+
       # Build and Publish the Docker images
       - name: Build and Publish
+        env:
+          PUBLISH: ${{ steps.mode.outputs.publish }}
+          PUSH_LATEST: ${{ steps.mode.outputs.newest }}
         run: |
-          export TAG=`echo $GITHUB_REF | awk -F/ '{print $NF}'`
-          echo $TAG
-          docker buildx create --name multi_platform --use
-          docker buildx build --platform linux/amd64,linux/arm64 \
-            . \
-            -t "$GCR_HOSTNAME"/"$IMAGE":"$TAG" \
-            -t "$GCR_HOSTNAME"/"$IMAGE":latest \
-            --push \
-            --build-arg GITHUB_SHA="$GITHUB_SHA" \
+          set -euo pipefail
+          BUILD_ARGS=(
+            --platform linux/amd64,linux/arm64
+            --build-arg GITHUB_SHA="$GITHUB_SHA"
             --build-arg GITHUB_REF="$GITHUB_REF"
+          )
+          if [[ "$PUBLISH" == "true" ]]; then
+            BUILD_ARGS+=(--push -t "$GCR_HOSTNAME/$IMAGE:$GITHUB_REF_NAME")
+            if [[ "$PUSH_LATEST" == "true" ]]; then
+              BUILD_ARGS+=(-t "$GCR_HOSTNAME/$IMAGE:latest")
+            fi
+          else
+            # Manual runs only check that the image builds; nothing is pushed.
+            echo "Manual run: building without pushing."
+          fi
+          docker buildx create --name multi_platform --use
+          docker buildx build "${BUILD_ARGS[@]}" .
+
+      # After the newest release is pushed, tag the images listed before the build.
+      # If any earlier step fails, this step is skipped and nothing is tagged.
+      - name: Deprecate prior images
+        if: steps.mode.outputs.publish == 'true' && steps.mode.outputs.newest == 'true'
+        run: |
+          set -euo pipefail
+          while IFS= read -r digest; do
+            [[ -n "$digest" ]] || continue
+            tag="deprecated-public-image-${digest#sha256:}"
+            echo "Tagging $AR_IMAGE@$digest as $tag"
+            gcloud --verbosity=error artifacts docker tags add "$AR_IMAGE@$digest" "$AR_IMAGE:$tag" < /dev/null
+          done < "$RUNNER_TEMP/prior_images.txt"
+
+  # Release runs are started by release-please[bot], so GitHub's own failure
+  # emails don't reach a person. Open an issue so that repository watchers are
+  # notified.
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [setup-build-publish-deploy]
+    if: failure() && github.event_name == 'push'
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Docker image release failed for ${context.ref.replace('refs/tags/', '')}`,
+              body: `See [failed job](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).\n\nIf the failure was temporary, re-run the failed jobs. If the code or Dockerfile needs a fix, merge it with a fix: commit so that release-please cuts a new release. Older images are only tagged as deprecated after a successful push, so nothing needs to be undone.`,
+            });

@@ -47,13 +47,20 @@ jobs:
         run: |
           go mod tidy
           go test -v  ./... -tags=integration
-      
-      - name: Notify for daily it tests failure
-        if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+
+  # Opens an issue when a scheduled run fails, so that repository watchers are
+  # notified. It runs as a separate job so that only this job can create issues.
+  notify_on_failure:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: failure() && github.event_name == 'schedule'
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
-            github.rest.issues.create({
+            await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: 'Daily integration tests against Spanner failed',

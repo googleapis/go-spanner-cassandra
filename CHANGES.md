@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.5](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.4...v0.7.5) (2026-11-12)
+
+
+### Bug Fixes
+
+* upgrade OpenTelemetry Go, golang.org/x/net and golang.org/x/crypto ([#104](https://github.com/googleapis/go-spanner-cassandra/issues/104)) ([7743aa7](https://github.com/googleapis/go-spanner-cassandra/commit/7743aa758a4623488128e95acd9fd453e218f33b))
+
 ## [0.7.4](https://github.com/googleapis/go-spanner-cassandra/compare/v0.7.3...v0.7.4) (2026-11-11)
 
 
